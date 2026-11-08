@@ -6,7 +6,10 @@ const srv = http.createServer((q, r) => {
   r.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); r.end(fs.readFileSync(f));
 });
 const wss = new WebSocketServer({ server: srv });
-const GAMES = { caro: { max: 2 }, noitu: { max: 6 }, ott: { max: 2 } }, rooms = {};
+const GAMES = { caro: { max: 2 }, noitu: { max: 6 }, ott: { max: 2 }, ccn: { max: 4 } }, rooms = {};
+const CCN_COLORS = ['red', 'yellow', 'blue', 'green'];
+const CCN_START = { red: 0, yellow: 26, blue: 13, green: 39 };
+const CCN_SAFE = new Set([0, 13, 26, 39]);
 let uid = 0;
 const chatHistory = [];
 const send = (c, o) => c.readyState === 1 && c.send(JSON.stringify(o));
@@ -19,7 +22,7 @@ function lobby() {
 }
 function sync(r) {
   const o = { t: 'room', code: r.code, game: r.game, host: r.players[0].id, on: r.on,
-    players: r.players.map(p => ({ id: p.id, name: p.name, ready: !!p.ready })), pub: r.pub, g: r.g,
+    players: r.players.map(p => ({ id: p.id, name: p.name, ready: !!p.ready, color: p.color })), max: GAMES[r.game].max, pub: r.pub, g: r.g,
     ms: r.g && r.g.deadline ? Math.max(0, r.g.deadline - Date.now()) : 0 };
   r.players.forEach(p => send(p, o)); lobby();
 }
@@ -58,6 +61,58 @@ function five(b, i, v) {
 }
 const syl = w => w.trim().toLowerCase().split(/\s+/);
 
+
+function ccnLegal(r, player, die) {
+  const horses = r.g.horses[player.id] || [];
+  return horses.map((progress, i) => ({ i, progress }))
+    .filter(x => x.progress === -1 ? die === 6 : x.progress < 57 && x.progress + die <= 57)
+    .map(x => x.i);
+}
+function ccnRoll(r, c) {
+  const g = r.g;
+  if (!r.on || r.game !== 'ccn' || r.players[g.turn] !== c || g.die !== null) return;
+  const die = 1 + Math.floor(Math.random() * 6);
+  g.die = die; g.legal = ccnLegal(r, c, die);
+  g.last = c.name + ' tung được ' + die + '.';
+  if (!g.legal.length) {
+    g.last += ' Không có quân hợp lệ để đi.';
+    g.die = null; g.legal = [];
+    if (die !== 6) g.turn = (g.turn + 1) % r.players.length;
+  }
+  sync(r);
+}
+function ccnMove(r, c, horseIndex) {
+  const g = r.g;
+  if (!r.on || r.game !== 'ccn' || r.players[g.turn] !== c || g.die === null) return;
+  const i = Number(horseIndex);
+  if (!Number.isInteger(i) || !g.legal.includes(i)) return;
+  const horses = g.horses[c.id], die = g.die;
+  horses[i] = horses[i] === -1 ? 0 : horses[i] + die;
+  let captured = 0;
+  if (horses[i] <= 51) {
+    const cell = (CCN_START[c.color] + horses[i]) % 52;
+    if (!CCN_SAFE.has(cell)) {
+      r.players.forEach(p => {
+        if (p.id === c.id) return;
+        g.horses[p.id].forEach((progress, j) => {
+          if (progress >= 0 && progress <= 51 && (CCN_START[p.color] + progress) % 52 === cell) {
+            g.horses[p.id][j] = -1; captured++;
+          }
+        });
+      });
+    }
+  }
+  const finished = horses.filter(x => x === 57).length;
+  g.last = c.name + ' di chuyển quân ' + (i + 1) + (captured ? ' và đá ' + captured + ' quân về chuồng.' : '.');
+  if (finished === 4) {
+    g.win = c.id; g.last = c.name + ' đã đưa cả 4 quân về đích!'; r.on = false;
+  } else if (die !== 6) {
+    g.turn = (g.turn + 1) % r.players.length;
+  }
+  g.die = null; g.legal = [];
+  sync(r);
+}
+
 wss.on('connection', c => {
   c.id = ++uid; c.name = 'Khách ' + c.id; c.room = null;
   c.on('message', raw => {
@@ -75,13 +130,13 @@ wss.on('connection', c => {
     } else if (m.t === 'create') {
       if (!GAMES[m.game]) return; leave(c);
       const room = { code: mkcode(), game: m.game, pub: !!m.pub, players: [c], on: false, g: null }; c.ready = true;
-      rooms[room.code] = room; c.room = room; sync(room);
+      c.color = CCN_COLORS[0]; rooms[room.code] = room; c.room = room; sync(room);
     } else if (m.t === 'join') {
       const room = rooms[String(m.code || '').toUpperCase()];
       if (!room) return send(c, { t: 'err', msg: 'Không tìm thấy phòng' });
       if (room.on || room.players.length >= GAMES[room.game].max) return send(c, { t: 'err', msg: 'Phòng đầy hoặc đang chơi' });
       if (room === r) return; leave(c);
-      room.players.push(c); c.room = room; c.ready = false; sync(room);
+      room.players.push(c); c.room = room; c.ready = false; c.color = CCN_COLORS[room.players.length - 1]; sync(room);
     } else if (m.t === 'leave') leave(c);
     else if (m.t === 'ready' && r && !r.on) { c.ready = !!m.ready; if (r.players[0]) r.players[0].ready = true; sync(r); }
     else if (m.t === 'start' && r && !r.on && r.players[0] === c && r.players.length >= 2 && r.players.every(p => p.ready)) {
@@ -90,12 +145,19 @@ wss.on('connection', c => {
         ? { b: Array(N * N).fill(0), turn: 0, win: null }
         : r.game === 'noitu'
           ? { words: [], turn: 0, out: [], win: null, deadline: 0 }
-          : { choices: {}, result: null, win: null };
+          : r.game === 'ott'
+          ? { choices: {}, result: null, win: null }
+          : { horses: Object.fromEntries(r.players.map(p => [p.id, [-1, -1, -1, -1]])), turn: 0, die: null, legal: [], win: null, last: 'Tung xúc xắc để bắt đầu.' };
       if (r.game === 'noitu') tick(r);
       sync(r);
+    } else if (m.t === 'roll' && r && r.on && r.game === 'ccn') {
+      ccnRoll(r, c);
     } else if (m.t === 'move' && r && r.on) {
       const g = r.g; if (r.game !== 'ott' && r.players[g.turn] !== c) return;
-      if (r.game === 'ott') {
+      if (r.game === 'ccn') {
+        ccnMove(r, c, m.horse);
+        return;
+      } else if (r.game === 'ott') {
         const choice = String(m.choice || '');
         if (!['rock', 'paper', 'scissors'].includes(choice) || g.choices[c.id]) return;
         g.choices[c.id] = choice;
