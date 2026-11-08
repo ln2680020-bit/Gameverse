@@ -291,14 +291,14 @@ function drawLobby(){
  const search=el('input','search');search.placeholder='Tìm trò chơi hoặc phòng...';search.value=window.gvSearch||'';
  welcome.append(intro,search);m.append(welcome);
  const quick=el('div','joinbar');
- const code=el('input','field');code.placeholder='Nhập mã phòng bạn bè gửi...';code.maxLength=8;code.autocapitalize='characters';code.value=window.gvCode||'';
- const join=el('button','btn','Vào phòng');join.onclick=()=>{const v=code.value.trim().toUpperCase();if(v){if(!send({t:'join',code:v}))showToast('Chưa kết nối được với máy chủ.');}else code.focus()};
- code.oninput=()=>window.gvCode=code.value.toUpperCase();code.onkeydown=e=>e.key==='Enter'&&join.click();
+ const code=el('input','field');code.type='text';code.disabled=false;code.readOnly=false;code.tabIndex=0;code.inputMode='text';code.autocomplete='off';code.spellcheck=false;code.setAttribute('aria-label','Mã phòng mời');code.placeholder='Nhập mã phòng bạn bè gửi...';code.maxLength=12;code.autocapitalize='characters';code.style.pointerEvents='auto';code.style.position='relative';code.style.zIndex='2';code.value=window.gvCode||'';
+ const join=el('button','btn','Vào phòng');join.type='button';const submitJoin=()=>{const v=code.value.toUpperCase().replace(/[^A-Z0-9]/g,'');if(!v){showToast('Hãy nhập mã phòng gồm 6 ký tự.');code.focus();return;}if(v.length!==6){showToast('Mã phòng phải gồm 6 ký tự.');code.focus();return;}if(!send({t:'join',code:v}))showToast('Chưa kết nối được với máy chủ.');};join.onclick=submitJoin;
+ code.addEventListener('input',()=>{code.value=code.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);window.gvCode=code.value;});code.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitJoin();}});
  const privateBtn=el('button','btn secondary','Tạo phòng riêng');privateBtn.onclick=createPrivateRoom;quick.append(code,join,privateBtn);m.append(quick);
  const groups=[
   {title:'BOARD GAME',items:[
    {id:'caro',name:'Cờ Caro',desc:'2 người',ico:'❎',active:true},
-   {name:'Cờ vua',desc:'2 người',ico:'♞'},
+   {name:'Cờ Vua',desc:'2 người · Đang phát triển',ico:'♞'},
    {name:'Cờ tướng',desc:'2 người',ico:'🀄'},
    {name:'Cờ Tỷ Phú',desc:'2–6 người',ico:'🎲'},
    {id:'ccn',name:'Cờ Cá Ngựa',desc:'2–4 người · 4 quân',ico:'🐴',active:true},
