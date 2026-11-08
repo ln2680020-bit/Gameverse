@@ -59,6 +59,16 @@ h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:
 #log{padding:14px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:9px;font-size:13px;word-break:break-word}
 .chat-line{background:var(--panel2);padding:8px 10px;border-radius:9px;color:#dce5eb}
 .chat-line b{color:var(--accent);margin-right:5px}
+.chat-reactions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.chat-reaction{border:1px solid var(--line);background:#17283a;color:var(--text);border-radius:20px;padding:3px 7px;font-size:12px;cursor:pointer}
+.chat-reaction:hover{border-color:var(--accent);background:#21404a}
+.chat-emotes{display:flex;gap:5px;padding:7px 12px 0;flex-wrap:wrap}
+.chat-emotes button{background:#17283a;border:1px solid var(--line);border-radius:7px;padding:4px 7px;color:var(--text);font-size:16px}
+.chess-board{width:min(100%,520px);aspect-ratio:1;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));margin:12px auto;background:#101b28;border:5px solid #263b50;border-radius:8px;overflow:hidden}
+.chess-square{border:0;border-radius:0;aspect-ratio:1;display:grid;place-items:center;padding:0;font-size:clamp(22px,5vw,43px);line-height:1}
+.chess-square.light{background:#e8dfc9;color:#172333}.chess-square.dark{background:#668477;color:#fff}
+.chess-square.selected{outline:3px solid var(--accent);outline-offset:-3px;background:#4c91f0}
+.chess-help{text-align:center;color:var(--muted);font-size:12px;margin:8px 0 14px}
 .chat-compose{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
 .chat-compose input,.field{min-width:0;flex:1;background:#111b28;border:1px solid var(--line);border-radius:9px;padding:10px 11px;color:var(--text);outline:none}
 .chat-compose button{flex:none}
@@ -181,7 +191,8 @@ h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:
  <aside class="side"><section class="chatbox">
   <div class="chat-head"><h2 id="chat-title">Trò chuyện sảnh</h2><button class="chat-toggle" id="chat-toggle" type="button">Mở chat</button><small id="chat-state">Mọi người</small></div>
   <div id="log"><div class="notice">Chào mừng đến GameVerse! Hãy nói lời chào với mọi người.</div></div>
-  <div class="chat-compose"><input id="ci" maxlength="200" placeholder="Nhắn tin..."><button class="btn small" id="cs">Gửi</button></div>
+  <div class="chat-emotes" id="chat-emotes" aria-label="Emote nhanh"><button type="button" title="Thích">👍</button><button type="button" title="Yêu thích">❤️</button><button type="button" title="Cười">😂</button><button type="button" title="Ngạc nhiên">😮</button><button type="button" title="Tuyệt vời">🔥</button><button type="button" title="Vỗ tay">👏</button></div>
+  <div class="chat-compose"><input id="ci" maxlength="200" placeholder="Viết bình luận hoặc lời nhắn..."><button class="btn small" id="cs">Gửi</button></div>
   <div class="notice">Hãy trò chuyện lịch sự và tôn trọng người chơi khác.</div>
  </section></aside>
 </div>
@@ -189,8 +200,9 @@ h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:
 </div>
 <script>
 const $=s=>document.querySelector(s);
-let ws,me={},room=null,lob={rooms:[],online:0},tEnd=0,enteredLobby=false,inviteAttempted=false;
-const GN={caro:'Cờ Caro',noitu:'Nối Từ',ott:'Oẳn Tù Tì',ccn:'Cờ Cá Ngựa'},GI={caro:'⭕',noitu:'🔤',ott:'✊',ccn:'🐴'};
+let ws,me={},room=null,lob={rooms:[],online:0},tEnd=0,enteredLobby=false,inviteAttempted=false,chessSelected=null;
+const CHAT_EMOTES=['👍','❤️','😂','😮','🔥','👏'];
+const GN={caro:'Cờ Caro',noitu:'Nối Từ',ott:'Oẳn Tù Tì',ccn:'Cờ Cá Ngựa',chess:'Cờ Vua'},GI={caro:'⭕',noitu:'🔤',ott:'✊',ccn:'🐴',chess:'♟️'};
 const send=o=>{if(ws&&ws.readyState===1){ws.send(JSON.stringify(o));return true;}$('#online').textContent='Chưa kết nối máy chủ';return false;};
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
 function showToast(message,type='info'){
@@ -199,7 +211,15 @@ function showToast(message,type='info'){
  const item=el('div','toast-message'+(type==='error'?' error':''),message);item.setAttribute('role','status');stack.append(item);
  setTimeout(()=>{item.style.opacity='0';item.style.transform='translateY(-5px)';setTimeout(()=>item.remove(),180);},3200);
 }
-function addChat(m){const d=el('div','chat-line');d.append(el('b',0,m.name+':'),document.createTextNode(m.text));$('#log').append(d);$('#log').scrollTop=$('#log').scrollHeight}
+function renderChatReactions(d,m){
+ let row=d.querySelector('.chat-reactions');if(!row){row=el('div','chat-reactions');d.append(row);}row.replaceChildren();
+ CHAT_EMOTES.forEach(emoji=>{const count=(m.reactions&&m.reactions[emoji]||[]).length;const b=el('button','chat-reaction',emoji+(count?' '+count:''));b.type='button';b.title='Thả '+emoji;b.onclick=()=>send({t:'react',id:m.id,emoji});row.append(b);});
+}
+function addChat(m){
+ const d=el('div','chat-line');d.dataset.messageId=String(m.id||'');
+ d.append(el('b',0,m.name+':'),document.createTextNode(m.text));
+ renderChatReactions(d,m);$('#log').append(d);$('#log').scrollTop=$('#log').scrollHeight;
+}
 function setChatTitle(){ $('#chat-title').textContent=room?'Chat phòng '+room.code:'Trò chuyện sảnh';$('#chat-state').textContent=room?'Người trong phòng':'Mọi người';}
 function conn(name){
  try{ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host);}catch(e){$('#online').textContent='Không tạo được kết nối';return;}
@@ -208,9 +228,10 @@ function conn(name){
  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}
   if(m.t==='me'){me=m;$('#profile').textContent=m.name+' · Đổi tên'}
   else if(m.t==='lobby'){lob=m;enteredLobby=true;$('#online').textContent=m.online+' người online';if(!room)drawLobby();setChatEnabled(true)}
-  else if(m.t==='room'){if(!room||room.code!==m.code)$('#log').replaceChildren();room=m;tEnd=Date.now()+m.ms;setChatTitle();drawRoom()}
+  else if(m.t==='room'){if(!room||room.code!==m.code){$('#log').replaceChildren();chessSelected=null;}room=m;tEnd=Date.now()+m.ms;setChatTitle();drawRoom()}
   else if(m.t==='left'){room=null;setChatTitle();$('#log').replaceChildren(el('div','notice','Bạn đã rời phòng.'));drawLobby()}
   else if(m.t==='chat')addChat(m);
+  else if(m.t==='reaction'){const node=[...$('#log').querySelectorAll('.chat-line')].find(x=>x.dataset.messageId===String(m.id));if(node)renderChatReactions(node,m);}
   else if(m.t==='err')showToast(m.msg);
  };
  ws.onclose=()=>{ $('#online').textContent='Mất kết nối · Đang thử lại';setTimeout(()=>{if(!ws||ws.readyState===WebSocket.CLOSED)conn(name);},2500);};
@@ -267,7 +288,7 @@ function createPrivateRoom(){
  const head=el('div','room-dialog-head'),heading=el('div');const title=el('h2',0,'Tạo phòng riêng');title.id='private-dialog-title';heading.append(title,el('p',0,'Chọn trò chơi để tạo phòng và mời bạn bè bằng mã phòng.'));
  const close=el('button','dialog-close','×');close.type='button';close.setAttribute('aria-label','Đóng');close.onclick=()=>backdrop.remove();head.append(heading,close);dialog.append(head);
  let selected='caro';const choices=[];
- [['caro','⭕','Cờ Caro','Đối đầu 1 vs 1'],['noitu','🔤','Nối Từ','Tối đa 6 người'],['ott','✊','Oẳn Tù Tì','Đối đầu 1 vs 1'],['ccn','🐴','Cờ Cá Ngựa','2–4 người · 4 quân mỗi người']].forEach(([id,ico,name,desc])=>{
+ [['caro','⭕','Cờ Caro','Đối đầu 1 vs 1'],['chess','♟️','Cờ Vua','2 người · Luật cờ vua tiêu chuẩn'],['noitu','🔤','Nối Từ','Tối đa 6 người'],['ott','✊','Oẳn Tù Tì','Đối đầu 1 vs 1'],['ccn','🐴','Cờ Cá Ngựa','2–4 người · 4 quân mỗi người']].forEach(([id,ico,name,desc])=>{
   const b=el('button','dialog-choice'+(id===selected?' selected':''));b.type='button';b.setAttribute('aria-pressed',String(id===selected));
   b.append(el('div','game-icon',ico));const info=el('span');info.append(el('strong',0,name),el('small',0,desc));b.append(info);
   b.onclick=()=>{selected=id;choices.forEach(x=>{x.classList.toggle('selected',x.dataset.game===selected);x.setAttribute('aria-pressed',String(x.dataset.game===selected));});};
@@ -298,7 +319,7 @@ function drawLobby(){
  const groups=[
   {title:'BOARD GAME',items:[
    {id:'caro',name:'Cờ Caro',desc:'2 người',ico:'❎',active:true},
-   {name:'Cờ Vua',desc:'2 người · Đang phát triển',ico:'♞'},
+   {id:'chess',name:'Cờ Vua',desc:'2 người · Đang chơi',ico:'♟️',active:true},
    {name:'Cờ tướng',desc:'2 người',ico:'🀄'},
    {name:'Cờ Tỷ Phú',desc:'2–6 người',ico:'🎲'},
    {id:'ccn',name:'Cờ Cá Ngựa',desc:'2–4 người · 4 quân',ico:'🐴',active:true},
@@ -374,7 +395,7 @@ function drawRoom(){
  const area=el('section','play-area');
  if(!room.g){const note=el('div','start-note');note.append(el('h2',0,'Đang chờ người chơi'),el('p','sub',room.players.length<2?'Gửi mã phòng cho bạn bè để cùng tham gia.':'Chủ phòng có thể bắt đầu trận đấu.'));area.append(note);m.append(area);return}
  const g=room.g,status=el('div','game-status'),winner=room.players.find(p=>p.id===g.win);
- let msg=room.game==='ott'?(g.result?(g.win===-1?'Trận đấu hòa!':'🏆 '+(winner?winner.name:'Người chơi')+' chiến thắng!'):'Cả hai hãy chọn một biểu tượng!'):(g.win?(g.win===-1?'Trận đấu hòa!':'🏆 '+(winner?winner.name:'Người chơi')+' chiến thắng!'):'Đến lượt: '+room.players[g.turn].name);
+ let msg=room.game==='chess'?(g.win!==null?(g.win===-1?'Ván cờ hòa!':'🏆 '+(winner?winner.name:'Người chơi')+' thắng!'):(g.status||'Đến lượt: '+room.players[g.turn].name)):room.game==='ott'?(g.result?(g.win===-1?'Trận đấu hòa!':'🏆 '+(winner?winner.name:'Người chơi')+' chiến thắng!'):'Cả hai hãy chọn một biểu tượng!'):(g.win?(g.win===-1?'Trận đấu hòa!':'🏆 '+(winner?winner.name:'Người chơi')+' chiến thắng!'):'Đến lượt: '+room.players[g.turn].name);
  status.append(el('strong',0,msg));if(room.game==='noitu'&&room.on){const tm=el('span','pill','20 giây');tm.id='tm';status.append(tm)}area.append(status);
  if(room.game==='ccn'){
   const colors={red:'Đỏ',yellow:'Vàng',blue:'Xanh dương',green:'Xanh lá'};
@@ -404,6 +425,20 @@ function drawRoom(){
    const outcome=el('h2','',g.win===-1?'Hai bạn hòa nhau!':(winner?winner.name:'Người chơi')+' thắng ván này!');outcome.style.textAlign='center';outcome.style.margin='20px 0';area.append(result,outcome);
    const again=el('p','sub','Chủ phòng có thể nhấn Chơi lại để bắt đầu ván mới.');again.style.textAlign='center';area.append(again);
   }
+ }else if(room.game==='chess'){
+  const board=el('div','chess-board'),fen=(g.fen||'').split(' ')[0].split('/');
+  const pieces={K:'♔',Q:'♕',R:'♖',B:'♗',N:'♘',P:'♙',k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
+  const squares=[];
+  fen.forEach((line,r)=>{let files=[];for(const ch of line){if(/[1-8]/.test(ch))files.push(...Array(Number(ch)).fill(''));else files.push(ch);}
+   files.forEach((piece,col)=>{const square=String.fromCharCode(97+col)+(8-r),b=el('button','chess-square '+((r+col)%2?'dark':'light'),pieces[piece]||'');b.type='button';b.title=square;b.classList.toggle('selected',chessSelected===square);
+    const own=piece&&((piece===piece.toUpperCase())=== (g.turn===0));b.disabled=!room.on||room.players[g.turn]?.id!==me.id;
+    b.onclick=()=>{if(chessSelected&&chessSelected!==square){if(own){chessSelected=square;drawRoom();}else{send({t:'move',from:chessSelected,to:square});chessSelected=null;}}else if(own){chessSelected=square;drawRoom();}else chessSelected=null;};
+    squares.push(b);
+   });
+  });
+  squares.forEach(b=>board.append(b));area.append(board);
+  const sides=el('div','ludo-legend');room.players.forEach((p,i)=>sides.append(el('span','player',(i===0?'♔ Trắng · ':'♚ Đen · ')+p.name)));area.append(sides);
+  area.append(el('p','chess-help','Chọn quân của bạn, sau đó chọn ô muốn đi. Tốt phong cấp tự động thành Hậu. Nước đi được máy chủ kiểm tra theo luật cờ vua.'));
  }else if(room.game==='caro'){
   const board=el('div','board');g.b.forEach((v,i)=>{const b=el('button',v===1?'x':v===2?'o':'',v===1?'X':v===2?'O':'');b.disabled=!room.on||room.players[g.turn]?.id!==me.id||!!v;b.onclick=()=>send({t:'move',i});board.append(b)});area.append(board);
  }else{
@@ -414,8 +449,9 @@ function drawRoom(){
  m.append(area);
 }
 setInterval(()=>{const t=$('#tm');if(t)t.textContent=Math.max(0,Math.ceil((tEnd-Date.now())/1000))+' giây'},250);
-const sendChat=()=>{const i=$('#ci');if(!enteredLobby){showToast('Bạn cần nhập tên nhân vật và vào sảnh trước khi bình luận.');return;}if(!i.value.trim())return;if(!send({t:'chat',text:i.value})){showToast('Chưa kết nối được với máy chủ. Hãy đợi kết nối hoặc tải lại trang.');return;}i.value='';};
-$('#cs').onclick=sendChat;$('#ci').onkeydown=e=>e.key==='Enter'&&sendChat();
+const sendChat=(text)=>{const i=$('#ci');if(!enteredLobby){showToast('Bạn cần nhập tên nhân vật và vào sảnh trước khi bình luận.');return;}const value=String(text===undefined?i.value:text).trim();if(!value)return;if(!send({t:'chat',text:value})){showToast('Chưa kết nối được với máy chủ. Hãy đợi kết nối hoặc tải lại trang.');return;}if(text===undefined)i.value='';};
+$('#cs').onclick=()=>sendChat();$('#ci').onkeydown=e=>e.key==='Enter'&&sendChat();
+$('#chat-emotes').querySelectorAll('button').forEach(b=>b.onclick=()=>sendChat(b.textContent));
 $('#chat-toggle').onclick=()=>{const box=document.querySelector('.chatbox');box.classList.toggle('mobile-open');$('#chat-toggle').textContent=box.classList.contains('mobile-open')?'Thu gọn':'Mở chat'};
 setChatEnabled(false);login();
 </script>
