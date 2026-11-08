@@ -164,7 +164,7 @@ h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:
 </div>
 <script>
 const $=s=>document.querySelector(s);
-let ws,me={},room=null,lob={rooms:[],online:0},tEnd=0,enteredLobby=false;
+let ws,me={},room=null,lob={rooms:[],online:0},tEnd=0,enteredLobby=false,inviteAttempted=false;
 const GN={caro:'Cờ Caro',noitu:'Nối Từ'},GI={caro:'⭕',noitu:'🔤'};
 const send=o=>{if(ws&&ws.readyState===1){ws.send(JSON.stringify(o));return true;}$('#online').textContent='Chưa kết nối máy chủ';return false;};
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
@@ -172,7 +172,7 @@ function addChat(m){const d=el('div','chat-line');d.append(el('b',0,m.name+':'),
 function setChatTitle(){ $('#chat-title').textContent=room?'Chat phòng '+room.code:'Trò chuyện sảnh';$('#chat-state').textContent=room?'Người trong phòng':'Mọi người';}
 function conn(name){
  try{ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host);}catch(e){$('#online').textContent='Không tạo được kết nối';return;}
- ws.onopen=()=>{send({t:'hello',name});$('#online').textContent='Đã kết nối máy chủ';};
+ ws.onopen=()=>{send({t:'hello',name});$('#online').textContent='Đã kết nối máy chủ';const inviteCode=new URLSearchParams(location.search).get('room');if(inviteCode&&!inviteAttempted){inviteAttempted=true;setTimeout(()=>{if(!send({t:'join',code:inviteCode.toUpperCase()}))$('#online').textContent='Không thể vào phòng mời';},150);}};
  ws.onerror=()=>{$('#online').textContent='Lỗi kết nối máy chủ';};
  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}
   if(m.t==='me'){me=m;$('#profile').textContent=m.name+' · Đổi tên'}
@@ -315,14 +315,29 @@ function drawLobby(){
  });
  if(keepFocus){const target=[...m.querySelectorAll('input')].find(x=>x.placeholder===keepFocus.placeholder);if(target){target.value=keepFocus.value;target.focus();try{target.setSelectionRange(keepFocus.start,keepFocus.end)}catch{}}}
  setChatTitle();
-}function drawRoom(){
+}async function copyRoomInvite(button,includeLink){
+ const url=location.origin+location.pathname+'?room='+encodeURIComponent(room.code);
+ const text=includeLink?'Tham gia phòng '+room.code+' trên GameVerse: '+url:room.code;
+ const old=button.textContent;
+ try{
+  if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);
+  else{const temp=el('textarea');temp.value=text;temp.style.position='fixed';temp.style.opacity='0';document.body.append(temp);temp.select();const ok=document.execCommand('copy');temp.remove();if(!ok)throw new Error('copy failed');}
+  button.textContent=includeLink?'Đã sao chép lời mời':'Đã sao chép mã';
+  setTimeout(()=>{if(button.isConnected)button.textContent=old;},1800);
+ }catch(e){
+  button.textContent=includeLink?'Không sao chép được':'Mã: '+room.code;
+  setTimeout(()=>{if(button.isConnected)button.textContent=old;},2500);
+ }
+}
+function drawRoom(){
  const m=$('#main');m.innerHTML='';
  const top=el('div','room-top'),title=el('div','room-title');title.append(el('h1',0,GN[room.game]+' · '+room.code),el('p',0,(room.pub===false?'Phòng riêng':'Phòng công khai')+' · Chia sẻ mã để mời bạn bè'));const actions=el('div','room-actions');
- const copy=el('button','btn secondary small','Sao chép mã');copy.onclick=()=>{if(navigator.clipboard)navigator.clipboard.writeText(room.code).then(()=>copy.textContent='Đã chép');};const leave=el('button','btn ghost small','Rời phòng');leave.onclick=()=>send({t:'leave'});actions.append(copy,leave);
+ const copy=el('button','btn secondary small','Sao chép mã');copy.onclick=()=>copyRoomInvite(copy,false);const invite=el('button','btn small','Mời bạn bè');invite.onclick=()=>copyRoomInvite(invite,true);const leave=el('button','btn ghost small','Rời phòng');leave.onclick=()=>send({t:'leave'});actions.append(copy,invite,leave);
  const allReady=room.players.length>=2&&room.players.every(p=>p.ready);
  if(room.host===me.id&&!room.on){const start=el('button','btn small',room.g?'Chơi lại':'Bắt đầu');start.disabled=!allReady;start.title=allReady?'Tất cả đã sẵn sàng':'Chờ tất cả người chơi sẵn sàng';start.onclick=()=>send({t:'start'});actions.append(start)}
  if(room.host!==me.id&&!room.on){const mine=room.players.find(p=>p.id===me.id);const ready=el('button',mine&&mine.ready?'btn ghost small':'btn small',mine&&mine.ready?'Hủy sẵn sàng':'Sẵn sàng');ready.onclick=()=>send({t:'ready',ready:!(mine&&mine.ready)});actions.append(ready)}
  top.append(title,actions);m.append(top);
+ const roomInfo=el('div','pill');roomInfo.style.display='inline-flex';roomInfo.style.margin='0 0 12px';roomInfo.textContent=(room.pub===false?'🔒 Phòng riêng':'🌐 Phòng công khai')+' · '+room.players.length+'/'+(room.game==='caro'?2:6)+' người · Mã '+room.code;m.append(roomInfo);
  const players=el('div','player-strip');room.players.forEach((p,i)=>{const item=el('div','player'+(p.id===me.id?' me':''));item.append(el('span','avatar',p.name.slice(0,1).toUpperCase()),document.createTextNode(p.name+(p.id===room.host?' · Chủ phòng':'')+(p.ready?' · ✓ Sẵn sàng':' · Đang chờ')));players.append(item)});m.append(players);
  const area=el('section','play-area');
  if(!room.g){const note=el('div','start-note');note.append(el('h2',0,'Đang chờ người chơi'),el('p','sub',room.players.length<2?'Gửi mã phòng cho bạn bè để cùng tham gia.':'Chủ phòng có thể bắt đầu trận đấu.'));area.append(note);m.append(area);return}
