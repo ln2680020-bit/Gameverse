@@ -162,12 +162,14 @@ wss.on('connection', c => {
         : r.game === 'noitu'
           ? { words: [], turn: 0, out: [], win: null, deadline: 0 }
           : r.game === 'ott'
-          ? { choices: {}, result: null, win: null }
+          ? { choices: {}, result: null, win: null, round: 1, score: Object.fromEntries(r.players.map(p => [p.id, 0])) }
           : r.game === 'ccn'
             ? { horses: Object.fromEntries(r.players.map(p => [p.id, [-1, -1, -1, -1]])), turn: 0, die: null, legal: [], win: null, last: 'Tung xúc xắc để bắt đầu.' }
             : { fen: new Chess().fen(), turn: 0, win: null, status: 'Trắng đi trước.' };
       if (r.game === 'noitu') tick(r);
       sync(r);
+    } else if (m.t === 'nextRound' && r && r.on && r.game === 'ott' && r.g.result) {
+      r.g.choices = {}; r.g.result = null; r.g.round++; r.g.win = null; sync(r);
     } else if (m.t === 'move' && r && r.on && r.game === 'chess') {
       const g = r.g; if (r.players[g.turn] !== c) return;
       const from = String(m.from || ''), to = String(m.to || '');
@@ -197,8 +199,10 @@ wss.on('connection', c => {
           const a = g.choices[r.players[0].id], b = g.choices[r.players[1].id];
           const beats = { rock: 'scissors', paper: 'rock', scissors: 'paper' };
           const winner = a === b ? -1 : beats[a] === b ? r.players[0].id : r.players[1].id;
-          g.win = winner; g.result = { choices: r.players.map(p => ({ id: p.id, choice: g.choices[p.id] })), winner };
-          r.on = false;
+          g.win = winner;
+          if (winner !== -1) g.score[winner] = (g.score[winner] || 0) + 1;
+          g.result = { choices: r.players.map(p => ({ id: p.id, choice: g.choices[p.id] })), winner, round: g.round };
+          if (winner !== -1 && g.score[winner] >= 3) r.on = false;
         }
       } else if (r.game === 'caro') {
         const i = m.i | 0; if (i < 0 || i >= N * N || g.b[i]) return;
