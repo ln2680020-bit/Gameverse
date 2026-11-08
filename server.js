@@ -63,7 +63,7 @@ wss.on('connection', c => {
     const r = c.room;
     if (m.t === 'hello') {
       c.name = String(m.name || '').trim().slice(0, 16) || c.name;
-      send(c, { t: 'me', id: c.id, name: c.name }); lobby();
+      send(c, { t: 'me', id: c.id, name: c.name }); if (c.room) sync(c.room); else lobby();
     } else if (m.t === 'chat') {
       const text = String(m.text || '').trim().slice(0, 200); if (!text) return;
       const o = { t: 'chat', name: c.name, text };
