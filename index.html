@@ -124,7 +124,7 @@ h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:
 </div>
 <script>
 const $=s=>document.querySelector(s);
-let ws,me={},room=null,lob={rooms:[],online:0},tEnd=0;
+let ws,me={},room=null,lob={rooms:[],online:0},tEnd=0,enteredLobby=false;
 const GN={caro:'Cờ Caro',noitu:'Nối Từ'},GI={caro:'⭕',noitu:'🔤'};
 const send=o=>{if(ws&&ws.readyState===1){ws.send(JSON.stringify(o));return true;}$('#online').textContent='Chưa kết nối máy chủ';return false;};
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
@@ -135,8 +135,8 @@ function conn(name){
  ws.onopen=()=>{send({t:'hello',name});$('#online').textContent='Đã kết nối máy chủ';};
  ws.onerror=()=>{$('#online').textContent='Lỗi kết nối máy chủ';};
  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}
-  if(m.t==='me'){me=m;$('#profile').textContent=m.name}
-  else if(m.t==='lobby'){lob=m;$('#online').textContent=m.online+' người online';if(!room)drawLobby()}
+  if(m.t==='me'){me=m;$('#profile').textContent=m.name+' · Đổi tên'}
+  else if(m.t==='lobby'){lob=m;enteredLobby=true;$('#online').textContent=m.online+' người online';if(!room)drawLobby();setChatEnabled(true)}
   else if(m.t==='room'){if(!room||room.code!==m.code)$('#log').replaceChildren();room=m;tEnd=Date.now()+m.ms;setChatTitle();drawRoom()}
   else if(m.t==='left'){room=null;setChatTitle();$('#log').replaceChildren(el('div','notice','Bạn đã rời phòng.'));drawLobby()}
   else if(m.t==='chat')addChat(m);
@@ -144,12 +144,14 @@ function conn(name){
  };
  ws.onclose=()=>{ $('#online').textContent='Mất kết nối · Đang thử lại';setTimeout(()=>{if(!ws||ws.readyState===WebSocket.CLOSED)conn(name);},2500);};
 }
+function setChatEnabled(enabled){const input=$('#ci'),button=$('#cs');input.disabled=!enabled;button.disabled=!enabled;input.placeholder=enabled?'Viết bình luận hoặc lời nhắn...':'Vào sảnh để bình luận';}
 function login(){
+ enteredLobby=false;setChatEnabled(false);
  const main=$('#main');main.innerHTML='';
  const box=el('section','play-area');box.style.maxWidth='480px';box.style.margin='70px auto';
- box.append(el('h1',0,'Chào mừng đến GameVerse'),el('p','sub','Nhập tên hiển thị để vào sảnh chơi.'));
+ box.append(el('h1',0,'Chào mừng đến GameVerse'),el('p','sub','Nhập tên nhân vật của bạn, sau đó nhấn Vào sảnh.'));
  const row=el('div','word-form');row.style.marginTop='20px';
- const input=el('input','field');input.maxLength=16;input.placeholder='Tên người chơi';input.autocomplete='nickname';input.value=localStorage.getItem('gv_name')||'';
+ const input=el('input','field');input.maxLength=16;input.placeholder='Tên nhân vật';input.setAttribute('aria-label','Tên nhân vật');input.autocomplete='nickname';input.value=localStorage.getItem('gv_name')||'';
  const status=el('p','sub','Tên này sẽ hiển thị với những người chơi khác.');status.style.marginTop='10px';
  const btn=el('button','btn','Vào sảnh');const go=()=>{const n=input.value.trim();if(!n){status.textContent='Bạn hãy nhập tên trước khi vào sảnh.';status.style.color='var(--danger)';input.focus();return;}try{localStorage.setItem('gv_name',n)}catch{}btn.disabled=true;status.textContent='Đang kết nối máy chủ...';status.style.color='var(--muted)';conn(n);const old=main.querySelector('.connect-error');if(old)old.remove();const timer=setTimeout(()=>{if(!ws||ws.readyState!==WebSocket.OPEN){btn.disabled=false;status.textContent='Chưa kết nối được. Hãy kiểm tra máy chủ rồi thử lại.';status.style.color='var(--danger)';}},7000);const check=()=>{if(ws&&ws.readyState===WebSocket.OPEN){clearTimeout(timer);status.textContent='Đã kết nối. Đang tải sảnh...';}};const poll=setInterval(()=>{if(ws&&ws.readyState===WebSocket.OPEN){check();clearInterval(poll);}else if(Date.now()>0&&btn.disabled===false)clearInterval(poll);},250);};
  btn.onclick=go;input.onkeydown=e=>e.key==='Enter'&&go();row.append(input,btn);box.append(row,status);main.append(box);
@@ -221,10 +223,10 @@ function drawLobby(){
  m.append(area);
 }
 setInterval(()=>{const t=$('#tm');if(t)t.textContent=Math.max(0,Math.ceil((tEnd-Date.now())/1000))+' giây'},250);
-const sendChat=()=>{const i=$('#ci');if(!i.value.trim())return;if(!send({t:'chat',text:i.value})){alert('Chưa kết nối được với máy chủ. Hãy đợi kết nối hoặc tải lại trang.');return;}i.value='';};
+const sendChat=()=>{const i=$('#ci');if(!enteredLobby){alert('Bạn cần nhập tên nhân vật và vào sảnh trước khi bình luận.');return;}if(!i.value.trim())return;if(!send({t:'chat',text:i.value})){alert('Chưa kết nối được với máy chủ. Hãy đợi kết nối hoặc tải lại trang.');return;}i.value='';};
 $('#cs').onclick=sendChat;$('#ci').onkeydown=e=>e.key==='Enter'&&sendChat();
 $('#chat-toggle').onclick=()=>{const box=document.querySelector('.chatbox');box.classList.toggle('mobile-open');$('#chat-toggle').textContent=box.classList.contains('mobile-open')?'Thu gọn':'Mở chat'};
-login();
+setChatEnabled(false);login();
 </script>
 </body>
 </html>
