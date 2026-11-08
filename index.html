@@ -100,7 +100,7 @@ h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:
  .joinbar{max-width:none}.joinbar .btn{min-width:82px;padding:8px}.joinbar .field{padding:9px;font-size:13px}
  .rooms{grid-template-columns:1fr}.section-head{margin:16px 0 8px}.games{grid-template-columns:1fr;gap:7px}.game-card{padding:9px;gap:10px}.game-icon{width:40px;height:40px;font-size:23px}.game-card h3{font-size:14px}.game-card p{font-size:12px}
  .btn.small{padding:7px 9px;font-size:12px}.room-card{padding:8px;gap:8px}.room-symbol{width:31px;height:31px;font-size:18px}.room-meta strong{font-size:13px}.room-meta small{font-size:11px}
- .chat-toggle{display:inline-block}.chatbox{height:auto;min-height:0}.chatbox #log,.chatbox .chat-compose,.chatbox>.notice{display:none}.chatbox.mobile-open #log{display:flex;height:210px;min-height:210px}.chatbox.mobile-open .chat-compose,.chatbox.mobile-open>.notice{display:flex}.chatbox.mobile-open>.notice{display:block}
+ .chat-toggle{display:inline-block}.chatbox{height:auto;min-height:0}.chatbox #log,.chatbox .chat-compose,.chatbox .chat-emotes,.chatbox>.notice{display:none}.chatbox.mobile-open #log{display:flex;height:210px;min-height:210px}.chatbox.mobile-open .chat-compose,.chatbox.mobile-open .chat-emotes,.chatbox.mobile-open>.notice{display:flex}.chatbox.mobile-open>.notice{display:block}
  .footer{padding:12px 0;display:block}.footer span{display:block;margin-top:3px}
 }
 @media(max-width:600px){.shell{padding:0 14px}.topbar{height:64px}.online{display:none}.layout{padding:18px 0}.welcome{display:block}.search{margin-top:14px;width:100%}.games{grid-template-columns:1fr}.game-card{padding:13px}.game-icon{width:56px;height:56px}.room-top{align-items:flex-start;flex-direction:column}.play-area{padding:10px}.board{gap:2px;padding:4px}.footer{display:block}.footer span{display:block;margin-top:5px}}
@@ -236,7 +236,7 @@ function conn(name){
  };
  ws.onclose=()=>{ $('#online').textContent='Mất kết nối · Đang thử lại';setTimeout(()=>{if(!ws||ws.readyState===WebSocket.CLOSED)conn(name);},2500);};
 }
-function setChatEnabled(enabled){const input=$('#ci'),button=$('#cs');input.disabled=!enabled;button.disabled=!enabled;input.placeholder=enabled?'Viết bình luận hoặc lời nhắn...':'Vào sảnh để bình luận';}
+function setChatEnabled(enabled){const input=$('#ci'),button=$('#cs');input.disabled=!enabled;button.disabled=!enabled;$('#chat-emotes').querySelectorAll('button').forEach(b=>b.disabled=!enabled);input.placeholder=enabled?'Viết bình luận hoặc lời nhắn...':'Vào sảnh để bình luận';}
 function login(){
  $('#navside').classList.add('hidden');
  enteredLobby=false;setChatEnabled(false);
