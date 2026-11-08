@@ -94,7 +94,7 @@ wss.on('connection', c => {
       if (r.game === 'noitu') tick(r);
       sync(r);
     } else if (m.t === 'move' && r && r.on) {
-      const g = r.g; if (r.players[g.turn] !== c) return;
+      const g = r.g; if (r.game !== 'ott' && r.players[g.turn] !== c) return;
       if (r.game === 'ott') {
         const choice = String(m.choice || '');
         if (!['rock', 'paper', 'scissors'].includes(choice) || g.choices[c.id]) return;
