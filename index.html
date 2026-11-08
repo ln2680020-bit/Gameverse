@@ -198,15 +198,35 @@ function login(){
  btn.onclick=go;input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go();}});input.addEventListener('input',()=>{status.textContent='Tên này sẽ hiển thị với những người chơi khác.';status.style.color='var(--muted)';});row.append(input,btn);box.append(row,status);main.append(box);input.focus();
 }
 function changePlayerName(){
+ if(!ws||ws.readyState!==WebSocket.OPEN){alert('Chưa kết nối máy chủ. Hãy đợi kết nối rồi thử lại.');return;}
  const current=me.name||localStorage.getItem('gv_name')||'';
- const next=prompt('Nhập tên người chơi mới (tối đa 16 ký tự):',current);
- if(next===null)return;
- const name=next.trim().slice(0,16);
- if(!name){alert('Tên người chơi không được để trống.');return;}
- if(!ws||ws.readyState!==WebSocket.OPEN){alert('Chưa kết nối máy chủ. Hãy tải lại trang rồi thử lại.');return;}
- try{localStorage.setItem('gv_name',name)}catch{}
- send({t:'hello',name});
- $('#profile').textContent=name+' · Đổi tên';
+ const backdrop=el('div','modal-backdrop');
+ const dialog=el('section','room-dialog');
+ dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','rename-dialog-title');
+ const head=el('div','room-dialog-head'),heading=el('div');
+ const title=el('h2',0,'Đổi tên người chơi');title.id='rename-dialog-title';
+ heading.append(title,el('p',0,'Tên mới sẽ hiển thị với những người chơi khác (tối đa 16 ký tự).'));
+ const close=el('button','dialog-close','×');close.type='button';close.setAttribute('aria-label','Đóng');
+ head.append(heading,close);dialog.append(head);
+ const input=el('input','field');input.type='text';input.maxLength=16;input.value=current;input.placeholder='Tên người chơi mới';input.autocomplete='nickname';input.setAttribute('aria-label','Tên người chơi mới');
+ const error=el('p','sub','');error.style.minHeight='20px';error.style.margin='8px 0 0';error.style.color='var(--danger)';
+ dialog.append(input,error);
+ const actions=el('div','dialog-actions'),cancel=el('button','btn ghost','Hủy'),save=el('button','btn','Lưu tên');
+ cancel.type=save.type='button';
+ const dismiss=()=>{backdrop.remove();document.removeEventListener('keydown',onKey);};
+ const onKey=e=>{if(e.key==='Escape')dismiss();if(e.key==='Enter'&&backdrop.isConnected)save.click();};
+ close.onclick=cancel.onclick=dismiss;
+ save.onclick=()=>{
+  const name=input.value.trim().slice(0,16);
+  if(!name){error.textContent='Tên người chơi không được để trống.';input.focus();return;}
+  if(!send({t:'hello',name})){error.textContent='Mất kết nối máy chủ. Hãy thử lại khi đã kết nối.';return;}
+  try{localStorage.setItem('gv_name',name)}catch{}
+  $('#profile').textContent=name+' · Đổi tên';
+  dismiss();
+ };
+ actions.append(cancel,save);dialog.append(actions);backdrop.append(dialog);
+ backdrop.addEventListener('click',e=>{if(e.target===backdrop)dismiss();});
+ document.addEventListener('keydown',onKey);document.body.append(backdrop);input.focus();input.select();
 }
 $('#profile').addEventListener('click',changePlayerName);
 function createRoom(game,pub=true){if(!send({t:'create',game,pub}))alert('Chưa kết nối được với máy chủ. Vui lòng thử lại sau.');}
