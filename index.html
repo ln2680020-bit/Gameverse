@@ -151,10 +151,10 @@ function login(){
  const box=el('section','play-area');box.style.maxWidth='480px';box.style.margin='70px auto';
  box.append(el('h1',0,'Chào mừng đến GameVerse'),el('p','sub','Nhập tên nhân vật của bạn, sau đó nhấn Vào sảnh.'));
  const row=el('div','word-form');row.style.marginTop='20px';
- const input=el('input','field');input.maxLength=16;input.placeholder='Tên nhân vật';input.setAttribute('aria-label','Tên nhân vật');input.autocomplete='nickname';input.value=localStorage.getItem('gv_name')||'';
+ const input=el('input','field');input.type='text';input.disabled=false;input.readOnly=false;input.tabIndex=0;input.maxLength=16;input.placeholder='Tên nhân vật';input.setAttribute('aria-label','Tên nhân vật');input.autocomplete='nickname';input.spellcheck=false;input.style.pointerEvents='auto';input.style.position='relative';input.style.zIndex='2';input.value=localStorage.getItem('gv_name')||'';
  const status=el('p','sub','Tên này sẽ hiển thị với những người chơi khác.');status.style.marginTop='10px';
  const btn=el('button','btn','Vào sảnh');const go=()=>{const n=input.value.trim();if(!n){status.textContent='Bạn hãy nhập tên trước khi vào sảnh.';status.style.color='var(--danger)';input.focus();return;}try{localStorage.setItem('gv_name',n)}catch{}btn.disabled=true;status.textContent='Đang kết nối máy chủ...';status.style.color='var(--muted)';conn(n);const old=main.querySelector('.connect-error');if(old)old.remove();const timer=setTimeout(()=>{if(!ws||ws.readyState!==WebSocket.OPEN){btn.disabled=false;status.textContent='Chưa kết nối được. Hãy kiểm tra máy chủ rồi thử lại.';status.style.color='var(--danger)';}},7000);const check=()=>{if(ws&&ws.readyState===WebSocket.OPEN){clearTimeout(timer);status.textContent='Đã kết nối. Đang tải sảnh...';}};const poll=setInterval(()=>{if(ws&&ws.readyState===WebSocket.OPEN){check();clearInterval(poll);}else if(Date.now()>0&&btn.disabled===false)clearInterval(poll);},250);};
- btn.onclick=go;input.onkeydown=e=>e.key==='Enter'&&go();row.append(input,btn);box.append(row,status);main.append(box);
+ btn.onclick=go;input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go();}});input.addEventListener('input',()=>{status.textContent='Tên này sẽ hiển thị với những người chơi khác.';status.style.color='var(--muted)';});row.append(input,btn);box.append(row,status);main.append(box);input.focus();
 }
 function changePlayerName(){
  const current=me.name||localStorage.getItem('gv_name')||'';
