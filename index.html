@@ -6,49 +6,55 @@
 <meta name="theme-color" content="#111827">
 <title>GameVerse — One Universe. Endless Games.</title>
 <style>
-:root{--bg:#101722;--panel:#182332;--panel2:#202e40;--line:#2d4054;--text:#f4f2e9;--muted:#9aabba;--accent:#ffc45b;--accent2:#78d8c0;--danger:#ff827c;--shadow:0 8px 24px #080d1580}
+:root{--bg:#111827;--panel:#1b2636;--panel2:#263449;--line:#3b4b60;--text:#f8f5e9;--muted:#aab7c7;--accent:#f4bd55;--accent2:#7ed8bd;--danger:#ff827c;--shadow:4px 4px 0 #0a101b}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 "Trebuchet MS",system-ui,sans-serif;image-rendering:pixelated}
 button,input{font:inherit}
 button{cursor:pointer}
 button:disabled{cursor:not-allowed;opacity:.45}
-.shell{max-width:1440px;margin:auto;min-height:100vh;padding:0 28px}
-.topbar{height:76px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:20px}
-.brand{display:flex;align-items:center;gap:11px;font-size:23px;font-weight:900;letter-spacing:-.8px}
-.brand-mark{width:38px;height:38px;display:grid;place-items:center;background:var(--accent);color:#17202b;border:3px solid #ffe1a0;border-radius:11px;box-shadow:3px 3px 0 #805b2d;font-size:22px}
+.shell{max-width:1320px;margin:auto;min-height:100vh;padding:0 22px}
+.topbar{height:66px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:20px}
+.brand{display:flex;align-items:center;gap:11px;font-size:21px;font-weight:900;letter-spacing:-.5px}
+.brand-mark{width:38px;height:38px;display:grid;place-items:center;background:var(--accent);color:#17202b;border:2px solid #ffe1a0;border-radius:7px;box-shadow:3px 3px 0 #805b2d;font-size:22px}
 .brand span:last-child{color:var(--accent)}
 .top-actions{display:flex;align-items:center;gap:10px}
 .online{color:var(--muted);font-size:13px}.online i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent2);margin-right:7px}
 .profile{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--text);font-weight:700}
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:22px;padding:28px 0}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:18px;padding:22px 0}
 main{min-width:0}
-.welcome{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:4px 0 22px}
-h1{font-size:clamp(27px,4vw,38px);line-height:1.1;margin:0 0 7px;letter-spacing:-1.2px}
+.welcome{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:2px 0 16px}
+h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:-1.2px}
 .sub{margin:0;color:var(--muted)}
-.section-head{display:flex;align-items:center;justify-content:space-between;margin:27px 0 13px}
-.section-head h2{font-size:17px;margin:0}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px}
+.section-head h2{font-size:16px;margin:0}
+.joinbar{display:flex;gap:8px;max-width:680px;padding:7px;background:var(--panel);border:1px solid var(--line);border-radius:9px;box-shadow:2px 2px 0 #0a101b}
+.joinbar .field{background:#111b28}
+.joinbar .btn{min-width:108px}
+.room-card{box-shadow:2px 2px 0 #0a101b}
+.chat-toggle{display:none;background:transparent;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:4px 8px}
+
 .pill{font-size:12px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:4px 9px}
 .search{width:min(100%,320px);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--text);outline:none}
 .search:focus,input:focus{border-color:var(--accent)}
-.games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.game-card{display:flex;align-items:center;gap:15px;padding:17px;background:var(--panel);border:1px solid var(--line);border-radius:14px;transition:.16s}
+.games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.game-card{display:flex;align-items:center;gap:11px;padding:11px;background:var(--panel);border:1px solid var(--line);border-radius:9px;box-shadow:2px 2px 0 #0a101b;transition:.16s}
 .game-card:hover{transform:translateY(-2px);border-color:#60758b;box-shadow:var(--shadow)}
-.game-icon{width:66px;height:66px;flex:none;border-radius:12px;display:grid;place-items:center;font-size:35px;background:#26394a;border:1px solid #435a6e}
-.game-card h3{margin:0 0 3px;font-size:17px}.game-card p{margin:0;color:var(--muted);font-size:13px}
+.game-icon{width:48px;height:48px;flex:none;border-radius:7px;display:grid;place-items:center;font-size:27px;background:#26394a;border:1px solid #435a6e;box-shadow:inset -3px -3px 0 #172333}
+.game-card h3{margin:0 0 3px;font-size:15px}.game-card p{margin:0;color:var(--muted);font-size:13px}
 .game-info{flex:1;min-width:0}
-.btn{border:0;border-radius:9px;padding:10px 14px;font-weight:800;background:var(--accent);color:#20232b}
+.btn{border:0;border-radius:6px;padding:9px 12px;font-weight:800;box-shadow:2px 2px 0 #0a101b;background:var(--accent);color:#20232b}
 .btn:hover{filter:brightness(1.06)}
 .btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
 .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
 .btn.small{padding:7px 11px;font-size:13px}
 .rooms{display:grid;gap:9px}
-.room-card{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 14px}
-.room-symbol{width:40px;height:40px;display:grid;place-items:center;background:var(--panel2);border-radius:10px;font-size:22px}
+.room-card{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+.room-symbol{width:34px;height:34px;display:grid;place-items:center;background:var(--panel2);border-radius:10px;font-size:22px}
 .room-meta{flex:1;min-width:0}.room-meta strong{display:block}.room-meta small{color:var(--muted)}
 .empty{padding:22px;text-align:center;color:var(--muted);background:var(--panel);border:1px dashed var(--line);border-radius:12px}
 .side{min-width:0}
-.chatbox{position:sticky;top:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:min(690px,calc(100vh - 110px));min-height:430px}
-.chat-head{padding:15px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.chatbox{position:sticky;top:18px;background:var(--panel);border:1px solid var(--line);border-radius:9px;overflow:hidden;display:flex;flex-direction:column;height:min(610px,calc(100vh - 100px));min-height:390px}
+.chat-head{padding:12px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
 .chat-head h2{font-size:16px;margin:0}.chat-head small{color:var(--muted)}
 #log{padding:14px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:9px;font-size:13px;word-break:break-word}
 .chat-line{background:var(--panel2);padding:8px 10px;border-radius:9px;color:#dce5eb}
@@ -64,7 +70,7 @@ h1{font-size:clamp(27px,4vw,38px);line-height:1.1;margin:0 0 7px;letter-spacing:
 .player{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);padding:7px 10px;border-radius:9px;font-size:13px}
 .avatar{width:25px;height:25px;border-radius:7px;display:inline-grid;place-items:center;background:#38566a;font-size:14px}
 .player.me{border-color:var(--accent);color:var(--accent)}
-.play-area{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;min-height:350px}
+.play-area{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:14px;min-height:320px}
 .game-status{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;color:var(--muted)}
 .board{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));gap:3px;max-width:570px;margin:auto;background:#111b28;padding:7px;border-radius:10px}
 .board button{aspect-ratio:1;min-width:0;border:1px solid #46576a;border-radius:4px;background:#d9d1b8;color:#19212b;font-weight:900;font-size:clamp(9px,1.5vw,17px);padding:0}
@@ -76,7 +82,16 @@ h1{font-size:clamp(27px,4vw,38px);line-height:1.1;margin:0 0 7px;letter-spacing:
 .start-note{text-align:center;color:var(--muted);padding:70px 10px}
 .footer{border-top:1px solid var(--line);padding:18px 0 25px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between}
 .hidden{display:none!important}
-@media(max-width:900px){.layout{grid-template-columns:1fr}.chatbox{position:static;height:420px;min-height:360px}.side{order:2}}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.chatbox{position:static;height:400px;min-height:340px}.side{order:2}}
+@media(max-width:640px){
+ .shell{padding:0 12px}.topbar{height:58px}.brand{font-size:19px}.brand-mark{width:32px;height:32px;font-size:18px}.online{display:none}
+ .layout{padding:14px 0;gap:13px}.welcome{display:block;margin-bottom:12px}h1{font-size:23px}.search{margin-top:10px;width:100%;padding:10px}
+ .joinbar{max-width:none}.joinbar .btn{min-width:82px;padding:8px}.joinbar .field{padding:9px;font-size:13px}
+ .section-head{margin:16px 0 8px}.games{grid-template-columns:1fr;gap:7px}.game-card{padding:9px;gap:10px}.game-icon{width:40px;height:40px;font-size:23px}.game-card h3{font-size:14px}.game-card p{font-size:12px}
+ .btn.small{padding:7px 9px;font-size:12px}.room-card{padding:8px;gap:8px}.room-symbol{width:31px;height:31px;font-size:18px}.room-meta strong{font-size:13px}.room-meta small{font-size:11px}
+ .chat-toggle{display:inline-block}.chatbox{height:auto;min-height:0}.chatbox #log,.chatbox .chat-compose,.chatbox>.notice{display:none}.chatbox.mobile-open #log{display:flex;height:210px;min-height:210px}.chatbox.mobile-open .chat-compose,.chatbox.mobile-open>.notice{display:flex}.chatbox.mobile-open>.notice{display:block}
+ .footer{padding:12px 0;display:block}.footer span{display:block;margin-top:3px}
+}
 @media(max-width:600px){.shell{padding:0 14px}.topbar{height:64px}.online{display:none}.layout{padding:18px 0}.welcome{display:block}.search{margin-top:14px;width:100%}.games{grid-template-columns:1fr}.game-card{padding:13px}.game-icon{width:56px;height:56px}.room-top{align-items:flex-start;flex-direction:column}.play-area{padding:10px}.board{gap:2px;padding:4px}.footer{display:block}.footer span{display:block;margin-top:5px}}
 </style>
 </head>
@@ -98,7 +113,7 @@ h1{font-size:clamp(27px,4vw,38px);line-height:1.1;margin:0 0 7px;letter-spacing:
   <div class="rooms" id="rooms"><div class="empty">Chưa có phòng nào. Hãy tạo phòng đầu tiên!</div></div>
  </main>
  <aside class="side"><section class="chatbox">
-  <div class="chat-head"><h2 id="chat-title">Trò chuyện sảnh</h2><small id="chat-state">Mọi người</small></div>
+  <div class="chat-head"><h2 id="chat-title">Trò chuyện sảnh</h2><button class="chat-toggle" id="chat-toggle" type="button">Mở chat</button><small id="chat-state">Mọi người</small></div>
   <div id="log"><div class="notice">Chào mừng đến GameVerse! Hãy nói lời chào với mọi người.</div></div>
   <div class="chat-compose"><input id="ci" maxlength="200" placeholder="Nhắn tin..."><button class="btn small" id="cs">Gửi</button></div>
   <div class="notice">Hãy trò chuyện lịch sự và tôn trọng người chơi khác.</div>
@@ -139,23 +154,33 @@ function login(){
 function createRoom(game){send({t:'create',game,pub:true});}
 function drawLobby(){
  const m=$('#main');m.innerHTML='';
- const welcome=el('div','welcome');const intro=el('div');intro.append(el('h1',0,'Chọn game. Gọi bạn bè. Bắt đầu!'),el('p','sub','Chơi cùng nhau, ngay trên trình duyệt.'));const search=el('input','search');search.placeholder='Tìm trò chơi hoặc phòng...';search.value=$('#search')?.value||'';welcome.append(intro,search);m.append(welcome);
- const sh=el('div','section-head');sh.append(el('h2',0,'Trò chơi'),el('span','pill','2 trò chơi'));m.append(sh);
+ const welcome=el('div','welcome');
+ const intro=el('div');intro.append(el('h1',0,'Chơi cùng bạn bè'),el('p','sub','Chọn trò chơi hoặc tham gia phòng bằng mã.'));
+ const search=el('input','search');search.placeholder='Tìm game hoặc phòng...';search.value=window.gvSearch||'';
+ welcome.append(intro,search);m.append(welcome);
+ const quick=el('div','joinbar');
+ const code=el('input','field');code.placeholder='Nhập mã phòng bạn bè gửi...';code.maxLength=8;code.autocapitalize='characters';code.value=window.gvCode||'';
+ const join=el('button','btn','Vào phòng');join.onclick=()=>{const v=code.value.trim().toUpperCase();if(v)send({t:'join',code:v});else code.focus()};
+ code.oninput=()=>window.gvCode=code.value.toUpperCase();code.onkeydown=e=>e.key==='Enter'&&join.click();
+ quick.append(code,join);m.append(quick);
+ const head=el('div','section-head');head.append(el('h2',0,'Chọn trò chơi'),el('span','pill','2 trò chơi'));m.append(head);
  const games=el('div','games');
- [{id:'caro',name:'Cờ Caro',desc:'Đối đầu 1 vs 1 · 2 người',ico:'⭕'},{id:'noitu',name:'Nối Từ',desc:'Nối từ cùng bạn bè · Tối đa 6 người',ico:'🔤'}].forEach(x=>{
+ [{id:'caro',name:'Cờ Caro',desc:'Đối kháng · 2 người',ico:'❎'},{id:'noitu',name:'Nối Từ',desc:'Chơi nhóm · Tối đa 6 người',ico:'🔤'}].forEach(x=>{
   const card=el('article','game-card');card.dataset.search=x.name.toLowerCase();card.append(el('div','game-icon',x.ico));
-  const info=el('div','game-info');info.append(el('h3',0,x.name),el('p',0,x.desc));const b=el('button','btn small','Chơi');b.onclick=()=>createRoom(x.id);card.append(info,b);games.append(card);
+  const info=el('div','game-info');info.append(el('h3',0,x.name),el('p',0,x.desc));
+  const b=el('button','btn small','Tạo phòng');b.onclick=()=>createRoom(x.id);card.append(info,b);games.append(card);
  });m.append(games);
- const head=el('div','section-head');head.append(el('h2',0,'Phòng công khai'),el('span','pill',lob.rooms.length+' phòng'));m.append(head);
+ const roomHead=el('div','section-head');roomHead.append(el('h2',0,'Phòng công khai'),el('span','pill',lob.rooms.length+' phòng'));m.append(roomHead);
  const list=el('div','rooms');list.id='rooms';
- if(!lob.rooms.length)list.append(el('div','empty','Chưa có phòng nào. Hãy tạo phòng đầu tiên!'));
- lob.rooms.forEach(x=>{const card=el('div','room-card');card.dataset.search=(GN[x.game]+' '+x.host+' '+x.code).toLowerCase();card.append(el('div','room-symbol',GI[x.game]||'🎮'));
-  const meta=el('div','room-meta');meta.append(el('strong',0,GN[x.game]+' · '+x.host),el('small',0,x.n+'/'+x.max+' người · '+x.code));const b=el('button','btn small',x.on||x.n>=x.max?'Đầy':'Vào phòng');b.disabled=x.on||x.n>=x.max;b.onclick=()=>send({t:'join',code:x.code});card.append(meta,b);list.append(card);
+ if(!lob.rooms.length)list.append(el('div','empty','Chưa có phòng công khai. Hãy tạo phòng và mời bạn bè!'));
+ lob.rooms.forEach(x=>{
+  const card=el('div','room-card');card.dataset.search=(GN[x.game]+' '+x.host+' '+x.code).toLowerCase();card.append(el('div','room-symbol',GI[x.game]||'🎮'));
+  const meta=el('div','room-meta');meta.append(el('strong',0,GN[x.game]+' · '+x.host),el('small',0,x.n+'/'+x.max+' người · Mã '+x.code));
+  const b=el('button','btn small',x.on||x.n>=x.max?'Đầy':'Vào');b.disabled=x.on||x.n>=x.max;b.onclick=()=>send({t:'join',code:x.code});card.append(meta,b);list.append(card);
  });m.append(list);
- search.oninput=()=>{const q=search.value.trim().toLowerCase();m.querySelectorAll('[data-search]').forEach(x=>x.classList.toggle('hidden',!x.dataset.search.includes(q)));};
+ search.oninput=()=>{window.gvSearch=search.value;const q=search.value.trim().toLowerCase();m.querySelectorAll('[data-search]').forEach(x=>x.classList.toggle('hidden',!x.dataset.search.includes(q)));};
  setChatTitle();
-}
-function drawRoom(){
+}function drawRoom(){
  const m=$('#main');m.innerHTML='';
  const top=el('div','room-top'),title=el('div','room-title');title.append(el('h1',0,GN[room.game]+' · '+room.code),el('p',0,'Phòng chơi cùng bạn bè'));const actions=el('div','room-actions');
  const copy=el('button','btn secondary small','Sao chép mã');copy.onclick=()=>{if(navigator.clipboard)navigator.clipboard.writeText(room.code).then(()=>copy.textContent='Đã chép');};const leave=el('button','btn ghost small','Rời phòng');leave.onclick=()=>send({t:'leave'});actions.append(copy,leave);
@@ -178,7 +203,7 @@ function drawRoom(){
 }
 setInterval(()=>{const t=$('#tm');if(t)t.textContent=Math.max(0,Math.ceil((tEnd-Date.now())/1000))+' giây'},250);
 const sendChat=()=>{const i=$('#ci');if(!i.value.trim())return;send({t:'chat',text:i.value});i.value='';};
-$('#cs').onclick=sendChat;$('#ci').onkeydown=e=>e.key==='Enter'&&sendChat();
+$('#cs').onclick=sendChat;$('#ci').onkeydown=e=>e.key==='Enter'&&sendChat();\n$('#chat-toggle').onclick=()=>{const box=document.querySelector('.chatbox');box.classList.toggle('mobile-open');$('#chat-toggle').textContent=box.classList.contains('mobile-open')?'Thu gọn':'Mở chat'};
 login();
 </script>
 </body>
