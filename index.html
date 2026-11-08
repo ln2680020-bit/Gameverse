@@ -116,6 +116,10 @@ h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:
 
 /* Private room dialog */
 .modal-backdrop{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:#050b14cc;backdrop-filter:blur(4px)}
+.toast-stack{position:fixed;right:18px;top:82px;z-index:80;display:grid;gap:8px;width:min(360px,calc(100vw - 28px));pointer-events:none}
+.toast-message{background:#21354a;border:1px solid #55718a;border-left:4px solid var(--accent);color:var(--text);padding:11px 13px;border-radius:8px;box-shadow:4px 4px 0 #080f19;font-size:13px;animation:toast-in .18s ease-out}
+.toast-message.error{border-left-color:var(--coral)}
+@keyframes toast-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .room-dialog{width:min(100%,440px);background:var(--panel);border:1px solid #496078;border-radius:12px;padding:20px;box-shadow:8px 8px 0 #080f19}
 .room-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
 .room-dialog h2{margin:0;font-size:21px}.room-dialog p{margin:5px 0 16px;color:var(--muted);font-size:13px}
@@ -168,6 +172,12 @@ let ws,me={},room=null,lob={rooms:[],online:0},tEnd=0,enteredLobby=false,inviteA
 const GN={caro:'Cờ Caro',noitu:'Nối Từ'},GI={caro:'⭕',noitu:'🔤'};
 const send=o=>{if(ws&&ws.readyState===1){ws.send(JSON.stringify(o));return true;}$('#online').textContent='Chưa kết nối máy chủ';return false;};
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function showToast(message,type='info'){
+ let stack=$('#toast-stack');
+ if(!stack){stack=el('div','toast-stack');stack.id='toast-stack';stack.setAttribute('aria-live','polite');stack.setAttribute('aria-atomic','false');document.body.append(stack);}
+ const item=el('div','toast-message'+(type==='error'?' error':''),message);item.setAttribute('role','status');stack.append(item);
+ setTimeout(()=>{item.style.opacity='0';item.style.transform='translateY(-5px)';setTimeout(()=>item.remove(),180);},3200);
+}
 function addChat(m){const d=el('div','chat-line');d.append(el('b',0,m.name+':'),document.createTextNode(m.text));$('#log').append(d);$('#log').scrollTop=$('#log').scrollHeight}
 function setChatTitle(){ $('#chat-title').textContent=room?'Chat phòng '+room.code:'Trò chuyện sảnh';$('#chat-state').textContent=room?'Người trong phòng':'Mọi người';}
 function conn(name){
@@ -180,7 +190,7 @@ function conn(name){
   else if(m.t==='room'){if(!room||room.code!==m.code)$('#log').replaceChildren();room=m;tEnd=Date.now()+m.ms;setChatTitle();drawRoom()}
   else if(m.t==='left'){room=null;setChatTitle();$('#log').replaceChildren(el('div','notice','Bạn đã rời phòng.'));drawLobby()}
   else if(m.t==='chat')addChat(m);
-  else if(m.t==='err')alert(m.msg);
+  else if(m.t==='err')showToast(m.msg);
  };
  ws.onclose=()=>{ $('#online').textContent='Mất kết nối · Đang thử lại';setTimeout(()=>{if(!ws||ws.readyState===WebSocket.CLOSED)conn(name);},2500);};
 }
@@ -198,7 +208,7 @@ function login(){
  btn.onclick=go;input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go();}});input.addEventListener('input',()=>{status.textContent='Tên này sẽ hiển thị với những người chơi khác.';status.style.color='var(--muted)';});row.append(input,btn);box.append(row,status);main.append(box);input.focus();
 }
 function changePlayerName(){
- if(!ws||ws.readyState!==WebSocket.OPEN){alert('Chưa kết nối máy chủ. Hãy đợi kết nối rồi thử lại.');return;}
+ if(!ws||ws.readyState!==WebSocket.OPEN){showToast('Chưa kết nối máy chủ. Hãy đợi kết nối rồi thử lại.');return;}
  const current=me.name||localStorage.getItem('gv_name')||'';
  const backdrop=el('div','modal-backdrop');
  const dialog=el('section','room-dialog');
@@ -229,7 +239,7 @@ function changePlayerName(){
  document.addEventListener('keydown',onKey);document.body.append(backdrop);input.focus();input.select();
 }
 $('#profile').addEventListener('click',changePlayerName);
-function createRoom(game,pub=true){if(!send({t:'create',game,pub}))alert('Chưa kết nối được với máy chủ. Vui lòng thử lại sau.');}
+function createRoom(game,pub=true){if(!send({t:'create',game,pub}))showToast('Chưa kết nối được với máy chủ. Vui lòng thử lại sau.');}
 function createPrivateRoom(){
  const backdrop=el('div','modal-backdrop');backdrop.setAttribute('role','presentation');
  const dialog=el('section','room-dialog');dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','private-dialog-title');
@@ -261,7 +271,7 @@ function drawLobby(){
  welcome.append(intro,search);m.append(welcome);
  const quick=el('div','joinbar');
  const code=el('input','field');code.placeholder='Nhập mã phòng bạn bè gửi...';code.maxLength=8;code.autocapitalize='characters';code.value=window.gvCode||'';
- const join=el('button','btn','Vào phòng');join.onclick=()=>{const v=code.value.trim().toUpperCase();if(v){if(!send({t:'join',code:v}))alert('Chưa kết nối được với máy chủ.');}else code.focus()};
+ const join=el('button','btn','Vào phòng');join.onclick=()=>{const v=code.value.trim().toUpperCase();if(v){if(!send({t:'join',code:v}))showToast('Chưa kết nối được với máy chủ.');}else code.focus()};
  code.oninput=()=>window.gvCode=code.value.toUpperCase();code.onkeydown=e=>e.key==='Enter'&&join.click();
  const privateBtn=el('button','btn secondary','Tạo phòng riêng');privateBtn.onclick=createPrivateRoom;quick.append(code,join,privateBtn);m.append(quick);
  const groups=[
@@ -354,7 +364,7 @@ function drawRoom(){
  m.append(area);
 }
 setInterval(()=>{const t=$('#tm');if(t)t.textContent=Math.max(0,Math.ceil((tEnd-Date.now())/1000))+' giây'},250);
-const sendChat=()=>{const i=$('#ci');if(!enteredLobby){alert('Bạn cần nhập tên nhân vật và vào sảnh trước khi bình luận.');return;}if(!i.value.trim())return;if(!send({t:'chat',text:i.value})){alert('Chưa kết nối được với máy chủ. Hãy đợi kết nối hoặc tải lại trang.');return;}i.value='';};
+const sendChat=()=>{const i=$('#ci');if(!enteredLobby){showToast('Bạn cần nhập tên nhân vật và vào sảnh trước khi bình luận.');return;}if(!i.value.trim())return;if(!send({t:'chat',text:i.value})){showToast('Chưa kết nối được với máy chủ. Hãy đợi kết nối hoặc tải lại trang.');return;}i.value='';};
 $('#cs').onclick=sendChat;$('#ci').onkeydown=e=>e.key==='Enter'&&sendChat();
 $('#chat-toggle').onclick=()=>{const box=document.querySelector('.chatbox');box.classList.toggle('mobile-open');$('#chat-toggle').textContent=box.classList.contains('mobile-open')?'Thu gọn':'Mở chat'};
 setChatEnabled(false);login();
