@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#111827">
+<meta name="theme-color" content="#101B2B">
 <title>GameVerse — One Universe. Endless Games.</title>
 <style>
-:root{--bg:#111827;--panel:#1b2636;--panel2:#263449;--line:#3b4b60;--text:#f8f5e9;--muted:#aab7c7;--accent:#f4bd55;--accent2:#7ed8bd;--danger:#ff827c;--shadow:4px 4px 0 #0a101b}
+:root{--bg:#101B2B;--panel:#19283B;--panel2:#24364B;--line:#34485F;--text:#EAF2F7;--muted:#A9BACB;--accent:#42D6C5;--accent2:#42D6C5;--blue:#4C91F0;--coral:#FF806B;--danger:#FF806B;--shadow:4px 4px 0 #091321}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 "Trebuchet MS",system-ui,sans-serif;image-rendering:pixelated}
 button,input{font:inherit}
@@ -15,7 +15,7 @@ button:disabled{cursor:not-allowed;opacity:.45}
 .shell{max-width:1320px;margin:auto;min-height:100vh;padding:0 22px}
 .topbar{height:66px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:20px}
 .brand{display:flex;align-items:center;gap:11px;font-size:21px;font-weight:900;letter-spacing:-.5px}
-.brand-mark{width:38px;height:38px;display:grid;place-items:center;background:var(--accent);color:#17202b;border:2px solid #ffe1a0;border-radius:7px;box-shadow:3px 3px 0 #805b2d;font-size:22px}
+.brand-mark{width:38px;height:38px;display:grid;place-items:center;background:var(--accent);color:#10252b;border:2px solid #8df3e5;border-radius:7px;box-shadow:3px 3px 0 #236f70;font-size:22px}
 .brand span:last-child{color:var(--accent)}
 .top-actions{display:flex;align-items:center;gap:10px}
 .online{color:var(--muted);font-size:13px}.online i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent2);margin-right:7px}
@@ -35,21 +35,21 @@ h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:
 
 .pill{font-size:12px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:4px 9px}
 .search{width:min(100%,320px);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--text);outline:none}
-.search:focus,input:focus{border-color:var(--accent)}
+.search:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 2px #42d6c522}
 .games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .game-card{display:flex;align-items:center;gap:11px;padding:11px;background:var(--panel);border:1px solid var(--line);border-radius:9px;box-shadow:2px 2px 0 #0a101b;transition:.16s}
 .game-card:hover{transform:translateY(-2px);border-color:#60758b;box-shadow:var(--shadow)}
 .game-icon{width:48px;height:48px;flex:none;border-radius:7px;display:grid;place-items:center;font-size:27px;background:#26394a;border:1px solid #435a6e;box-shadow:inset -3px -3px 0 #172333}
 .game-card h3{margin:0 0 3px;font-size:15px}.game-card p{margin:0;color:var(--muted);font-size:13px}
 .game-info{flex:1;min-width:0}
-.btn{border:0;border-radius:6px;padding:9px 12px;font-weight:800;box-shadow:2px 2px 0 #0a101b;background:var(--accent);color:#20232b}
+.btn{border:0;border-radius:6px;padding:9px 12px;font-weight:800;box-shadow:2px 2px 0 #0a101b;.btn{border:0;border-radius:6px;padding:9px 12px;font-weight:800;box-shadow:2px 2px 0 #091321;background:var(--accent);color:#10252b}
 .btn:hover{filter:brightness(1.06)}
-.btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+.btn.secondary{background:var(--blue);color:#07182b;border:1px solid #80b2ff}
 .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
 .btn.small{padding:7px 11px;font-size:13px}
 .rooms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .room-card{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 11px}
-.room-symbol{width:34px;height:34px;display:grid;place-items:center;background:var(--panel2);border-radius:10px;font-size:22px}
+.room-symbol{width:34px;height:34px;display:grid;place-items:center;background:var(--panel2);border:1px solid #3b5871;border-radius:10px;font-size:22px}
 .room-meta{flex:1;min-width:0}.room-meta strong{display:block}.room-meta small{color:var(--muted)}
 .empty{padding:22px;text-align:center;color:var(--muted);background:var(--panel);border:1px dashed var(--line);border-radius:12px}
 .side{min-width:0}
@@ -69,7 +69,7 @@ h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:
 .player-strip{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
 .player{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);padding:7px 10px;border-radius:9px;font-size:13px}
 .avatar{width:25px;height:25px;border-radius:7px;display:inline-grid;place-items:center;background:#38566a;font-size:14px}
-.player.me{border-color:var(--accent);color:var(--accent)}
+.player.me{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 1px #42d6c522}
 .play-area{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:14px;min-height:320px}
 .game-status{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;color:var(--muted)}
 .board{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));gap:3px;max-width:570px;margin:auto;background:#111b28;padding:7px;border-radius:10px}
