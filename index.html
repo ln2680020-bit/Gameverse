@@ -169,7 +169,7 @@ h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:
 <script>
 const $=s=>document.querySelector(s);
 let ws,me={},room=null,lob={rooms:[],online:0},tEnd=0,enteredLobby=false,inviteAttempted=false;
-const GN={caro:'Cờ Caro',noitu:'Nối Từ'},GI={caro:'⭕',noitu:'🔤'};
+const GN={caro:'Cờ Caro',noitu:'Nối Từ',ott:'Oẳn Tù Tì'},GI={caro:'⭕',noitu:'🔤',ott:'✊'};
 const send=o=>{if(ws&&ws.readyState===1){ws.send(JSON.stringify(o));return true;}$('#online').textContent='Chưa kết nối máy chủ';return false;};
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
 function showToast(message,type='info'){
@@ -246,7 +246,7 @@ function createPrivateRoom(){
  const head=el('div','room-dialog-head'),heading=el('div');const title=el('h2',0,'Tạo phòng riêng');title.id='private-dialog-title';heading.append(title,el('p',0,'Chọn trò chơi để tạo phòng và mời bạn bè bằng mã phòng.'));
  const close=el('button','dialog-close','×');close.type='button';close.setAttribute('aria-label','Đóng');close.onclick=()=>backdrop.remove();head.append(heading,close);dialog.append(head);
  let selected='caro';const choices=[];
- [['caro','⭕','Cờ Caro','Đối đầu 1 vs 1'],['noitu','🔤','Nối Từ','Tối đa 6 người']].forEach(([id,ico,name,desc])=>{
+ [['caro','⭕','Cờ Caro','Đối đầu 1 vs 1'],['noitu','🔤','Nối Từ','Tối đa 6 người'],['ott','✊','Oẳn Tù Tì','Đối đầu 1 vs 1']].forEach(([id,ico,name,desc])=>{
   const b=el('button','dialog-choice'+(id===selected?' selected':''));b.type='button';b.setAttribute('aria-pressed',String(id===selected));
   b.append(el('div','game-icon',ico));const info=el('span');info.append(el('strong',0,name),el('small',0,desc));b.append(info);
   b.onclick=()=>{selected=id;choices.forEach(x=>{x.classList.toggle('selected',x.dataset.game===selected);x.setAttribute('aria-pressed',String(x.dataset.game===selected));});};
@@ -291,6 +291,7 @@ function drawLobby(){
   ]},
   {title:'GIẢI TRÍ',items:[
    {id:'noitu',name:'Nối Từ',desc:'Tối đa 6 người',ico:'🔤',active:true},
+   {id:'ott',name:'Oẳn Tù Tì',desc:'2 người',ico:'✊',active:true},
    {name:'Ma Sói',desc:'5–12 người',ico:'🐺'}
   ]}
  ];
@@ -347,14 +348,28 @@ function drawRoom(){
  if(room.host===me.id&&!room.on){const start=el('button','btn small',room.g?'Chơi lại':'Bắt đầu');start.disabled=!allReady;start.title=allReady?'Tất cả đã sẵn sàng':'Chờ tất cả người chơi sẵn sàng';start.onclick=()=>send({t:'start'});actions.append(start)}
  if(room.host!==me.id&&!room.on){const mine=room.players.find(p=>p.id===me.id);const ready=el('button',mine&&mine.ready?'btn ghost small':'btn small',mine&&mine.ready?'Hủy sẵn sàng':'Sẵn sàng');ready.onclick=()=>send({t:'ready',ready:!(mine&&mine.ready)});actions.append(ready)}
  top.append(title,actions);m.append(top);
- const roomInfo=el('div','pill');roomInfo.style.display='inline-flex';roomInfo.style.margin='0 0 12px';roomInfo.textContent=(room.pub===false?'🔒 Phòng riêng':'🌐 Phòng công khai')+' · '+room.players.length+'/'+(room.game==='caro'?2:6)+' người · Mã '+room.code;m.append(roomInfo);
+ const roomInfo=el('div','pill');roomInfo.style.display='inline-flex';roomInfo.style.margin='0 0 12px';roomInfo.textContent=(room.pub===false?'🔒 Phòng riêng':'🌐 Phòng công khai')+' · '+room.players.length+'/'+(room.game==='noitu'?6:2)+' người · Mã '+room.code;m.append(roomInfo);
  const players=el('div','player-strip');room.players.forEach((p,i)=>{const item=el('div','player'+(p.id===me.id?' me':''));item.append(el('span','avatar',p.name.slice(0,1).toUpperCase()),document.createTextNode(p.name+(p.id===room.host?' · Chủ phòng':'')+(p.ready?' · ✓ Sẵn sàng':' · Đang chờ')));players.append(item)});m.append(players);
  const area=el('section','play-area');
  if(!room.g){const note=el('div','start-note');note.append(el('h2',0,'Đang chờ người chơi'),el('p','sub',room.players.length<2?'Gửi mã phòng cho bạn bè để cùng tham gia.':'Chủ phòng có thể bắt đầu trận đấu.'));area.append(note);m.append(area);return}
  const g=room.g,status=el('div','game-status'),winner=room.players.find(p=>p.id===g.win);
- let msg=g.win?(g.win===-1?'Trận đấu hòa!':'🏆 '+(winner?winner.name:'Người chơi')+' chiến thắng!'):'Đến lượt: '+room.players[g.turn].name;
+ let msg=room.game==='ott'?(g.result?(g.win===-1?'Trận đấu hòa!':'🏆 '+(winner?winner.name:'Người chơi')+' chiến thắng!'):'Cả hai hãy chọn một biểu tượng!'):(g.win?(g.win===-1?'Trận đấu hòa!':'🏆 '+(winner?winner.name:'Người chơi')+' chiến thắng!'):'Đến lượt: '+room.players[g.turn].name);
  status.append(el('strong',0,msg));if(room.game==='noitu'&&room.on){const tm=el('span','pill','20 giây');tm.id='tm';status.append(tm)}area.append(status);
- if(room.game==='caro'){
+ if(room.game==='ott'){
+  const choices=[['rock','✊','Búa'],['paper','✋','Bao'],['scissors','✌️','Kéo']];
+  if(!g.result){
+   const mine=g.choices&&g.choices[me.id];
+   const hint=el('p','sub',mine?'Bạn đã chọn. Đang chờ đối thủ...':'Chọn Búa, Bao hoặc Kéo.');hint.style.textAlign='center';hint.style.margin='22px 0 14px';area.append(hint);
+   const row=el('div','word-form');row.style.justifyContent='center';row.style.flexWrap='wrap';
+   choices.forEach(([id,icon,label])=>{const b=el('button','btn',icon+' '+label);b.disabled=!!mine||!room.on;b.onclick=()=>send({t:'move',choice:id});row.append(b);});area.append(row);
+   const states=el('div','player-strip');states.style.justifyContent='center';room.players.forEach(p=>states.append(el('div','player',(g.choices&&g.choices[p.id]?'✓ ':'… ')+p.name+(g.choices&&g.choices[p.id]?' đã chọn':' đang chọn'))));area.append(states);
+  }else{
+   const result=el('div','word-list');result.style.maxWidth='460px';result.style.margin='30px auto';
+   g.result.choices.forEach(x=>{const p=room.players.find(q=>q.id===x.id);const choice=choices.find(q=>q[0]===x.choice);result.append(el('div','word-item',(p?p.name:'Người chơi')+' chọn '+choice[1]+' '+choice[2]));});
+   const outcome=el('h2','',g.win===-1?'Hai bạn hòa nhau!':(winner?winner.name:'Người chơi')+' thắng ván này!');outcome.style.textAlign='center';outcome.style.margin='20px 0';area.append(result,outcome);
+   const again=el('p','sub','Chủ phòng có thể nhấn Chơi lại để bắt đầu ván mới.');again.style.textAlign='center';area.append(again);
+  }
+ }else if(room.game==='caro'){
   const board=el('div','board');g.b.forEach((v,i)=>{const b=el('button',v===1?'x':v===2?'o':'',v===1?'X':v===2?'O':'');b.disabled=!room.on||room.players[g.turn]?.id!==me.id||!!v;b.onclick=()=>send({t:'move',i});board.append(b)});area.append(board);
  }else{
   const words=el('div','word-list');g.words.forEach(x=>{const p=room.players.find(q=>q.id===x.by);words.append(el('div','word-item',(p?p.name:'Người chơi')+': '+x.w))});if(!g.words.length)words.append(el('div','empty','Hãy bắt đầu bằng một từ có hai tiếng.'));
