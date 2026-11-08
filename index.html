@@ -94,6 +94,25 @@ h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:
  .footer{padding:12px 0;display:block}.footer span{display:block;margin-top:3px}
 }
 @media(max-width:600px){.shell{padding:0 14px}.topbar{height:64px}.online{display:none}.layout{padding:18px 0}.welcome{display:block}.search{margin-top:14px;width:100%}.games{grid-template-columns:1fr}.game-card{padding:13px}.game-icon{width:56px;height:56px}.room-top{align-items:flex-start;flex-direction:column}.play-area{padding:10px}.board{gap:2px;padding:4px}.footer{display:block}.footer span{display:block;margin-top:5px}}
+
+/* GameVerse portal layout */
+.layout{grid-template-columns:170px minmax(0,1fr) 285px;gap:16px}
+.nav-side{display:flex;flex-direction:column;gap:7px;min-width:0;padding:14px 9px;background:#0c1725;border:1px solid var(--line);border-radius:10px;min-height:calc(100vh - 125px);position:sticky;top:12px;align-self:start}
+.nav-label{font-size:10px;letter-spacing:2px;color:var(--muted);padding:5px 9px 9px;font-weight:900}
+.nav-link{width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:0;background:transparent;color:var(--muted);padding:11px 10px;border-radius:7px;font-weight:800}
+.nav-link:hover,.nav-link.active{background:#1b3446;color:var(--accent)}
+.nav-spacer{flex:1;min-height:35px}.nav-foot{font-size:11px;line-height:1.7;color:#70869b;padding:10px 9px;border-top:1px solid var(--line)}
+.catalog-group{margin:22px 0 10px}.catalog-title{display:flex;align-items:center;gap:9px;font-size:14px;letter-spacing:1.5px;font-weight:900;margin:0 0 11px;color:var(--text)}
+.catalog-title:after{content:"";height:1px;background:var(--line);flex:1}.catalog-count{font-size:11px;color:var(--muted);background:var(--panel2);padding:3px 7px;border-radius:20px;letter-spacing:0}
+.catalog-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.catalog-card{position:relative;min-width:0;display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 7px;background:var(--panel);border:1px solid var(--line);border-radius:9px;text-align:center;color:var(--text)}
+.catalog-card .game-icon{width:58px;height:58px;font-size:30px}.catalog-card strong{font-size:13px}.catalog-card small{font-size:11px;color:var(--muted)}
+.catalog-card.soon{opacity:.62}.catalog-card.soon:after{content:"SẮP RA MẮT";font-size:8px;font-weight:900;letter-spacing:.4px;color:#10252b;background:var(--coral);padding:3px 5px;border-radius:4px;position:absolute;top:5px;right:4px}
+.catalog-card:not(.soon){cursor:pointer}.catalog-card:not(.soon):hover{border-color:var(--accent);transform:translateY(-2px)}
+#public-rooms{scroll-margin-top:15px}#catalog{scroll-margin-top:15px}#home{scroll-margin-top:15px}
+@media(max-width:1100px){.layout{grid-template-columns:145px minmax(0,1fr)}.side{grid-column:2}.nav-side{grid-row:1 / span 2;min-height:500px}.catalog-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.nav-side{position:static;min-height:0;flex-direction:row;overflow:auto;padding:6px;gap:5px}.nav-label,.nav-spacer,.nav-foot{display:none}.nav-link{width:auto;white-space:nowrap;justify-content:center;padding:9px 11px;font-size:12px}.side{grid-column:1}.catalog-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:430px){.catalog-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.catalog-card{padding:9px 4px}.catalog-card .game-icon{width:48px;height:48px;font-size:25px}.catalog-card strong{font-size:11px}.catalog-card small{font-size:10px}}
 </style>
 </head>
 <body>
@@ -103,6 +122,15 @@ h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:
  <div class="top-actions"><div class="online"><i></i><span id="online">Đang kết nối</span></div><button class="profile" id="profile" type="button" title="Nhấn để đổi tên người chơi">Khách · Đổi tên</button></div>
 </header>
 <div class="layout">
+ <nav class="nav-side hidden" id="navside" aria-label="Điều hướng GameVerse">
+ <div class="nav-label">MENU</div>
+ <button class="nav-link active" data-go="home">🎮 <span>Chơi</span></button>
+ <button class="nav-link" data-go="catalog">▦ <span>Danh mục game</span></button>
+ <button class="nav-link" data-go="public-rooms">▤ <span>Phòng công khai</span></button>
+ <button class="nav-link" data-go="chat-panel">▣ <span>Trò chuyện</span></button>
+ <div class="nav-spacer"></div>
+ <div class="nav-foot">One Universe.<br>Endless Games.</div>
+</nav>
  <main id="main">
   <div class="welcome"><div><h1>Chọn game. Gọi bạn bè. Bắt đầu!</h1><p class="sub">Chơi cùng nhau, ngay trên trình duyệt.</p></div><input class="search" id="search" placeholder="Tìm trò chơi hoặc phòng..."></div>
   <div class="section-head"><h2>Trò chơi</h2><span class="pill">Đang có 2 game</span></div>
@@ -146,6 +174,7 @@ function conn(name){
 }
 function setChatEnabled(enabled){const input=$('#ci'),button=$('#cs');input.disabled=!enabled;button.disabled=!enabled;input.placeholder=enabled?'Viết bình luận hoặc lời nhắn...':'Vào sảnh để bình luận';}
 function login(){
+ $('#navside').classList.add('hidden');
  enteredLobby=false;setChatEnabled(false);
  const main=$('#main');main.innerHTML='';
  const box=el('section','play-area');box.style.maxWidth='480px';box.style.margin='70px auto';
@@ -174,31 +203,67 @@ function drawLobby(){
  const active=document.activeElement;
  const keepFocus=active&&m.contains(active)?{placeholder:active.placeholder,value:active.value,start:active.selectionStart,end:active.selectionEnd}:null;
  m.innerHTML='';
- const welcome=el('div','welcome');
- const intro=el('div');intro.append(el('h1',0,'Chơi cùng bạn bè'),el('p','sub','Chọn trò chơi hoặc tham gia phòng bằng mã.'));
- const search=el('input','search');search.placeholder='Tìm game hoặc phòng...';search.value=window.gvSearch||'';
+ $('#navside').classList.remove('hidden');
+ const welcome=el('div','welcome');welcome.id='home';
+ const intro=el('div');intro.append(el('h1',0,'Chơi cùng bạn bè'),el('p','sub','Một thế giới trò chơi. Kết nối bạn bè.')); 
+ const search=el('input','search');search.placeholder='Tìm trò chơi hoặc phòng...';search.value=window.gvSearch||'';
  welcome.append(intro,search);m.append(welcome);
  const quick=el('div','joinbar');
  const code=el('input','field');code.placeholder='Nhập mã phòng bạn bè gửi...';code.maxLength=8;code.autocapitalize='characters';code.value=window.gvCode||'';
  const join=el('button','btn','Vào phòng');join.onclick=()=>{const v=code.value.trim().toUpperCase();if(v){if(!send({t:'join',code:v}))alert('Chưa kết nối được với máy chủ.');}else code.focus()};
  code.oninput=()=>window.gvCode=code.value.toUpperCase();code.onkeydown=e=>e.key==='Enter'&&join.click();
  quick.append(code,join);m.append(quick);
- const head=el('div','section-head');head.append(el('h2',0,'Chọn trò chơi'),el('span','pill','2 trò chơi'));m.append(head);
- const games=el('div','games');
- [{id:'caro',name:'Cờ Caro',desc:'Đối kháng · 2 người',ico:'❎'},{id:'noitu',name:'Nối Từ',desc:'Chơi nhóm · Tối đa 6 người',ico:'🔤'}].forEach(x=>{
-  const card=el('article','game-card');card.dataset.search=x.name.toLowerCase();card.append(el('div','game-icon',x.ico));
-  const info=el('div','game-info');info.append(el('h3',0,x.name),el('p',0,x.desc));
-  const b=el('button','btn small','Tạo phòng');b.onclick=()=>createRoom(x.id);card.append(info,b);games.append(card);
- });m.append(games);
- const roomHead=el('div','section-head');roomHead.append(el('h2',0,'Phòng công khai'),el('span','pill',lob.rooms.length+' phòng'));m.append(roomHead);
+ const groups=[
+  {title:'BOARD GAME',items:[
+   {id:'caro',name:'Cờ Caro',desc:'2 người',ico:'❎',active:true},
+   {name:'Cờ vua',desc:'2 người',ico:'♞'},
+   {name:'Cờ tướng',desc:'2 người',ico:'🀄'},
+   {name:'Cờ Tỷ Phú',desc:'2–6 người',ico:'🎲'},
+   {name:'Cờ Cá Ngựa',desc:'2–4 người',ico:'🐴'},
+   {name:'Khai Hoang',desc:'3–4 người',ico:'🌳'},
+   {name:'Carcassonne',desc:'2–5 người',ico:'🏰'},
+   {name:'Domino',desc:'2–4 người',ico:'🁣'},
+   {name:'Bắn Tàu',desc:'2 người',ico:'🚢'}
+  ]},
+  {title:'BÀI',items:[
+   {name:'Poker',desc:'2–6 người',ico:'🂡'},
+   {name:'Tiến lên',desc:'2–4 người',ico:'🃏'},
+   {name:'Uno',desc:'2–6 người',ico:'🎴'}
+  ]},
+  {title:'GIẢI TRÍ',items:[
+   {id:'noitu',name:'Nối Từ',desc:'Tối đa 6 người',ico:'🔤',active:true},
+   {name:'Ma Sói',desc:'5–12 người',ico:'🐺'}
+  ]}
+ ];
+ const catalog=el('section');catalog.id='catalog';
+ groups.forEach(group=>{
+  const section=el('div','catalog-group');const heading=el('h2','catalog-title');heading.append(document.createTextNode(group.title),el('span','catalog-count',String(group.items.length)));section.append(heading);
+  const grid=el('div','catalog-grid');
+  group.items.forEach(item=>{
+   const card=el('button','catalog-card'+(item.active?'':' soon'));card.type='button';card.dataset.search=(item.name+' '+group.title).toLowerCase();
+   card.append(el('div','game-icon',item.ico),el('strong',0,item.name),el('small',0,item.desc));
+   if(item.active){card.onclick=()=>createRoom(item.id);card.title='Tạo phòng '+item.name;}else{card.disabled=true;card.title='Trò chơi đang được phát triển';}
+   grid.append(card);
+  });
+  section.append(grid);catalog.append(section);
+ });
+ m.append(catalog);
+ const roomSection=el('section');roomSection.id='public-rooms';
+ const roomHead=el('div','section-head');roomHead.append(el('h2',0,'Phòng công khai'),el('span','pill',lob.rooms.length+' phòng'));roomSection.append(roomHead);
  const list=el('div','rooms');list.id='rooms';
  if(!lob.rooms.length)list.append(el('div','empty','Chưa có phòng công khai. Hãy tạo phòng và mời bạn bè!'));
  lob.rooms.forEach(x=>{
   const card=el('div','room-card');card.dataset.search=(GN[x.game]+' '+x.host+' '+x.code).toLowerCase();card.append(el('div','room-symbol',GI[x.game]||'🎮'));
   const meta=el('div','room-meta');meta.append(el('strong',0,GN[x.game]+' · '+x.host),el('small',0,x.n+'/'+x.max+' người · Mã '+x.code));
   const b=el('button','btn small',x.on||x.n>=x.max?'Đầy':'Vào');b.disabled=x.on||x.n>=x.max;b.onclick=()=>send({t:'join',code:x.code});card.append(meta,b);list.append(card);
- });m.append(list);
+ });roomSection.append(list);m.append(roomSection);
  search.oninput=()=>{window.gvSearch=search.value;const q=search.value.trim().toLowerCase();m.querySelectorAll('[data-search]').forEach(x=>x.classList.toggle('hidden',!x.dataset.search.includes(q)));};
+ document.querySelectorAll('.nav-link').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.nav-link').forEach(x=>x.classList.toggle('active',x===b));
+  const target=b.dataset.go;
+  if(target==='chat-panel'){document.querySelector('.chatbox').scrollIntoView({behavior:'smooth',block:'start'});document.querySelector('.chatbox').classList.add('mobile-open');$('#chat-toggle').textContent='Thu gọn';}
+  else {const node=target==='catalog'?catalog:target==='public-rooms'?roomSection:welcome;node.scrollIntoView({behavior:'smooth',block:'start'});}
+ });
  if(keepFocus){const target=[...m.querySelectorAll('input')].find(x=>x.placeholder===keepFocus.placeholder);if(target){target.value=keepFocus.value;target.focus();try{target.setSelectionRange(keepFocus.start,keepFocus.end)}catch{}}}
  setChatTitle();
 }function drawRoom(){
