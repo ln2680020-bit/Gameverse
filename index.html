@@ -100,7 +100,7 @@ h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:
 <div class="shell">
 <header class="topbar">
  <div class="brand"><span class="brand-mark">🎮</span>Game<span>Verse</span></div>
- <div class="top-actions"><div class="online"><i></i><span id="online">Đang kết nối</span></div><div class="profile" id="profile">Khách</div></div>
+ <div class="top-actions"><div class="online"><i></i><span id="online">Đang kết nối</span></div><button class="profile" id="profile" type="button" title="Nhấn để đổi tên người chơi">Khách · Đổi tên</button></div>
 </header>
 <div class="layout">
  <main id="main">
@@ -154,6 +154,18 @@ function login(){
  const btn=el('button','btn','Vào sảnh');const go=()=>{const n=input.value.trim();if(!n){status.textContent='Bạn hãy nhập tên trước khi vào sảnh.';status.style.color='var(--danger)';input.focus();return;}try{localStorage.setItem('gv_name',n)}catch{}btn.disabled=true;status.textContent='Đang kết nối máy chủ...';status.style.color='var(--muted)';conn(n);const old=main.querySelector('.connect-error');if(old)old.remove();const timer=setTimeout(()=>{if(!ws||ws.readyState!==WebSocket.OPEN){btn.disabled=false;status.textContent='Chưa kết nối được. Hãy kiểm tra máy chủ rồi thử lại.';status.style.color='var(--danger)';}},7000);const check=()=>{if(ws&&ws.readyState===WebSocket.OPEN){clearTimeout(timer);status.textContent='Đã kết nối. Đang tải sảnh...';}};const poll=setInterval(()=>{if(ws&&ws.readyState===WebSocket.OPEN){check();clearInterval(poll);}else if(Date.now()>0&&btn.disabled===false)clearInterval(poll);},250);};
  btn.onclick=go;input.onkeydown=e=>e.key==='Enter'&&go();row.append(input,btn);box.append(row,status);main.append(box);
 }
+function changePlayerName(){
+ const current=me.name||localStorage.getItem('gv_name')||'';
+ const next=prompt('Nhập tên người chơi mới (tối đa 16 ký tự):',current);
+ if(next===null)return;
+ const name=next.trim().slice(0,16);
+ if(!name){alert('Tên người chơi không được để trống.');return;}
+ if(!ws||ws.readyState!==WebSocket.OPEN){alert('Chưa kết nối máy chủ. Hãy tải lại trang rồi thử lại.');return;}
+ try{localStorage.setItem('gv_name',name)}catch{}
+ send({t:'hello',name});
+ $('#profile').textContent=name+' · Đổi tên';
+}
+$('#profile').addEventListener('click',changePlayerName);
 function createRoom(game){if(!send({t:'create',game,pub:true}))alert('Chưa kết nối được với máy chủ. Vui lòng thử lại sau.');}
 function drawLobby(){
  const m=$('#main');
