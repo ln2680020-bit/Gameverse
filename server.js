@@ -1,17 +1,19 @@
 const http = require('http'), fs = require('fs'), path = require('path');
 const { WebSocketServer } = require('ws');
+const { Chess } = require('chess.js');
 const srv = http.createServer((q, r) => {
   const f = [path.join(__dirname, 'public', 'index.html'), path.join(__dirname, 'index.html')].find(fs.existsSync);
   if (!f) { r.writeHead(500); return r.end('Khong tim thay index.html'); }
   r.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); r.end(fs.readFileSync(f));
 });
 const wss = new WebSocketServer({ server: srv });
-const GAMES = { caro: { max: 2 }, noitu: { max: 6 }, ott: { max: 2 }, ccn: { max: 4 } }, rooms = {};
+const GAMES = { caro: { max: 2 }, noitu: { max: 6 }, ott: { max: 2 }, ccn: { max: 4 }, chess: { max: 2 } }, rooms = {};
 const CCN_COLORS = ['red', 'yellow', 'blue', 'green'];
 const CCN_START = { red: 0, yellow: 26, blue: 13, green: 39 };
 const CCN_SAFE = new Set([0, 13, 26, 39]);
-let uid = 0;
+let uid = 0, chatSeq = 0;
 const chatHistory = [];
+const EMOTES = new Set(['👍','❤️','😂','😮','🔥','👏']);
 const send = (c, o) => c.readyState === 1 && c.send(JSON.stringify(o));
 const mkcode = () => Math.random().toString(36).slice(2, 8).toUpperCase();
 
@@ -124,12 +126,24 @@ wss.on('connection', c => {
       if (!c.room) { chatHistory.forEach(item => send(c, item)); lobby(); } else sync(c.room);
     } else if (m.t === 'chat') {
       const text = String(m.text || '').trim().slice(0, 200); if (!text) return;
-      const o = { t: 'chat', name: c.name, text, at: Date.now() };
-      if (!r) { chatHistory.push(o); if (chatHistory.length > 50) chatHistory.shift(); }
+      const o = { t: 'chat', id: ++chatSeq, name: c.name, text, at: Date.now(), reactions: {} };
+      const history = r ? (r.chatHistory || (r.chatHistory = [])) : chatHistory;
+      history.push(o); if (history.length > 50) history.shift();
       (r ? r.players : [...wss.clients]).forEach(p => send(p, o));
+    } else if (m.t === 'react') {
+      const id = Number(m.id), emoji = String(m.emoji || '');
+      if (!Number.isSafeInteger(id) || !EMOTES.has(emoji)) return;
+      const history = r ? (r.chatHistory || []) : chatHistory;
+      const item = history.find(x => x.id === id); if (!item) return;
+      item.reactions = item.reactions || {};
+      const users = new Set(item.reactions[emoji] || []);
+      if (users.has(c.id)) users.delete(c.id); else users.add(c.id);
+      item.reactions[emoji] = [...users];
+      const update = { t: 'reaction', id, reactions: item.reactions };
+      (r ? r.players : [...wss.clients]).forEach(p => send(p, update));
     } else if (m.t === 'create') {
       if (!GAMES[m.game]) return; leave(c);
-      const room = { code: mkcode(), game: m.game, pub: !!m.pub, players: [c], on: false, g: null }; c.ready = true;
+      const room = { code: mkcode(), game: m.game, pub: !!m.pub, players: [c], on: false, g: null, chatHistory: [] }; c.ready = true;
       c.color = CCN_COLORS[0]; rooms[room.code] = room; c.room = room; sync(room);
     } else if (m.t === 'join') {
       const code = String(m.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -138,7 +152,7 @@ wss.on('connection', c => {
       if (!room) return send(c, { t: 'err', msg: 'Không tìm thấy phòng. Hãy kiểm tra lại mã mời hoặc yêu cầu chủ phòng gửi mã mới.' });
       if (room.on || room.players.length >= GAMES[room.game].max) return send(c, { t: 'err', msg: 'Phòng đầy hoặc đang chơi' });
       if (room === r) return; leave(c);
-      room.players.push(c); c.room = room; c.ready = false; c.color = CCN_COLORS.find(color => !room.players.some(p => p !== c && p.color === color)) || CCN_COLORS[0]; sync(room);
+      room.players.push(c); c.room = room; c.ready = false; c.color = CCN_COLORS.find(color => !room.players.some(p => p !== c && p.color === color)) || CCN_COLORS[0]; (room.chatHistory || []).forEach(item => send(c, item)); sync(room);
     } else if (m.t === 'leave') leave(c);
     else if (m.t === 'ready' && r && !r.on) { c.ready = !!m.ready; if (r.players[0]) r.players[0].ready = true; sync(r); }
     else if (m.t === 'start' && r && !r.on && r.players[0] === c && r.players.length >= 2 && r.players.every(p => p.ready)) {
@@ -149,8 +163,24 @@ wss.on('connection', c => {
           ? { words: [], turn: 0, out: [], win: null, deadline: 0 }
           : r.game === 'ott'
           ? { choices: {}, result: null, win: null }
-          : { horses: Object.fromEntries(r.players.map(p => [p.id, [-1, -1, -1, -1]])), turn: 0, die: null, legal: [], win: null, last: 'Tung xúc xắc để bắt đầu.' };
+          : r.game === 'ccn'
+            ? { horses: Object.fromEntries(r.players.map(p => [p.id, [-1, -1, -1, -1]])), turn: 0, die: null, legal: [], win: null, last: 'Tung xúc xắc để bắt đầu.' }
+            : { fen: new Chess().fen(), turn: 0, win: null, status: 'Trắng đi trước.' };
       if (r.game === 'noitu') tick(r);
+      sync(r);
+    } else if (m.t === 'move' && r && r.on && r.game === 'chess') {
+      const g = r.g; if (r.players[g.turn] !== c) return;
+      const from = String(m.from || ''), to = String(m.to || '');
+      if (!/^[a-h][1-8]$/.test(from) || !/^[a-h][1-8]$/.test(to)) return;
+      try {
+        const chess = new Chess(g.fen);
+        const moved = chess.move({ from, to, promotion: 'q' });
+        if (!moved) return;
+        g.fen = chess.fen(); g.turn = chess.turn() === 'w' ? 0 : 1;
+        if (chess.isCheckmate()) { g.win = r.players[1 - g.turn].id; g.status = 'Chiếu hết!'; r.on = false; }
+        else if (chess.isDraw()) { g.win = -1; g.status = 'Ván cờ hòa.'; r.on = false; }
+        else g.status = chess.isCheck() ? 'Chiếu! Đến lượt ' + (g.turn === 0 ? 'Trắng' : 'Đen') + '.' : 'Đến lượt ' + (g.turn === 0 ? 'Trắng' : 'Đen') + '.';
+      } catch { return; }
       sync(r);
     } else if (m.t === 'roll' && r && r.on && r.game === 'ccn') {
       ccnRoll(r, c);
