@@ -175,12 +175,12 @@ wss.on('connection', c => {
       try {
         const chess = new Chess(g.fen);
         const moved = chess.move({ from, to, promotion: 'q' });
-        if (!moved) return;
+        if (!moved) return send(c, { t: 'err', msg: 'Nước đi không hợp lệ. Hãy chọn lại quân và ô đến.' });
         g.fen = chess.fen(); g.turn = chess.turn() === 'w' ? 0 : 1;
         if (chess.isCheckmate()) { g.win = r.players[1 - g.turn].id; g.status = 'Chiếu hết!'; r.on = false; }
         else if (chess.isDraw()) { g.win = -1; g.status = 'Ván cờ hòa.'; r.on = false; }
         else g.status = chess.isCheck() ? 'Chiếu! Đến lượt ' + (g.turn === 0 ? 'Trắng' : 'Đen') + '.' : 'Đến lượt ' + (g.turn === 0 ? 'Trắng' : 'Đen') + '.';
-      } catch { return; }
+      } catch { return send(c, { t: 'err', msg: 'Không thể thực hiện nước đi này.' }); }
       sync(r);
     } else if (m.t === 'roll' && r && r.on && r.game === 'ccn') {
       ccnRoll(r, c);
