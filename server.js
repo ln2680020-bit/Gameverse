@@ -136,7 +136,7 @@ wss.on('connection', c => {
       if (!room) return send(c, { t: 'err', msg: 'Không tìm thấy phòng' });
       if (room.on || room.players.length >= GAMES[room.game].max) return send(c, { t: 'err', msg: 'Phòng đầy hoặc đang chơi' });
       if (room === r) return; leave(c);
-      room.players.push(c); c.room = room; c.ready = false; c.color = CCN_COLORS[room.players.length - 1]; sync(room);
+      room.players.push(c); c.room = room; c.ready = false; c.color = CCN_COLORS.find(color => !room.players.some(p => p !== c && p.color === color)) || CCN_COLORS[0]; sync(room);
     } else if (m.t === 'leave') leave(c);
     else if (m.t === 'ready' && r && !r.on) { c.ready = !!m.ready; if (r.players[0]) r.players[0].ready = true; sync(r); }
     else if (m.t === 'start' && r && !r.on && r.players[0] === c && r.players.length >= 2 && r.players.every(p => p.ready)) {
