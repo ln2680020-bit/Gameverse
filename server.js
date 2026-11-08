@@ -19,7 +19,7 @@ function lobby() {
 }
 function sync(r) {
   const o = { t: 'room', code: r.code, game: r.game, host: r.players[0].id, on: r.on,
-    players: r.players.map(p => ({ id: p.id, name: p.name })), g: r.g,
+    players: r.players.map(p => ({ id: p.id, name: p.name, ready: !!p.ready })), pub: r.pub, g: r.g,
     ms: r.g && r.g.deadline ? Math.max(0, r.g.deadline - Date.now()) : 0 };
   r.players.forEach(p => send(p, o)); lobby();
 }
@@ -29,6 +29,7 @@ function leave(c) {
   send(c, { t: 'left' });
   if (!r.players.length) { clearTimeout(r.tm); delete rooms[r.code]; lobby(); return; }
   if (r.on) { r.on = false; clearTimeout(r.tm); r.g = null; }
+  if (r.players[0]) r.players[0].ready = true;
   sync(r);
 }
 function tick(r) {
@@ -73,16 +74,17 @@ wss.on('connection', c => {
       (r ? r.players : [...wss.clients]).forEach(p => send(p, o));
     } else if (m.t === 'create') {
       if (!GAMES[m.game]) return; leave(c);
-      const room = { code: mkcode(), game: m.game, pub: !!m.pub, players: [c], on: false, g: null };
+      const room = { code: mkcode(), game: m.game, pub: !!m.pub, players: [c], on: false, g: null }; c.ready = true;
       rooms[room.code] = room; c.room = room; sync(room);
     } else if (m.t === 'join') {
       const room = rooms[String(m.code || '').toUpperCase()];
       if (!room) return send(c, { t: 'err', msg: 'Không tìm thấy phòng' });
       if (room.on || room.players.length >= GAMES[room.game].max) return send(c, { t: 'err', msg: 'Phòng đầy hoặc đang chơi' });
       if (room === r) return; leave(c);
-      room.players.push(c); c.room = room; sync(room);
+      room.players.push(c); c.room = room; c.ready = false; sync(room);
     } else if (m.t === 'leave') leave(c);
-    else if (m.t === 'start' && r && !r.on && r.players[0] === c && r.players.length >= 2) {
+    else if (m.t === 'ready' && r && !r.on) { c.ready = !!m.ready; if (r.players[0]) r.players[0].ready = true; sync(r); }
+    else if (m.t === 'start' && r && !r.on && r.players[0] === c && r.players.length >= 2 && r.players.every(p => p.ready)) {
       r.on = true;
       r.g = r.game === 'caro'
         ? { b: Array(N * N).fill(0), turn: 0, win: null }
