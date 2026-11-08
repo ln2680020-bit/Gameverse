@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pixel Hub</title>
+<style>
+*{box-sizing:border-box;image-rendering:pixelated}
+body{margin:0;background:#14121f;color:#eee;font:bold 15px/1.4 "Courier New",monospace}
+h1{color:#f2b84b;text-shadow:3px 3px #000;margin:0 0 10px}
+button,input{font:inherit;border:3px solid #000;padding:8px 12px;background:#f2b84b;color:#000;cursor:pointer;box-shadow:3px 3px #000}
+button:active{transform:translate(2px,2px);box-shadow:1px 1px #000}
+button:disabled{background:#555;color:#999;cursor:default}
+input{background:#fff;cursor:text;box-shadow:none}
+.box{background:#241f3a;border:3px solid #000;box-shadow:4px 4px #000;padding:10px;margin-bottom:12px}
+#app{display:flex;gap:12px;padding:12px;max-width:1000px;margin:auto;flex-wrap:wrap}
+#main{flex:1 1 480px;min-width:0}#side{flex:1 1 260px}
+#log{height:260px;overflow-y:auto;font-size:13px;word-break:break-word}
+#log b{color:#f2b84b}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.g{display:grid;grid-template-columns:repeat(15,1fr);gap:1px;background:#000;border:3px solid #000;max-width:480px}
+.g button{aspect-ratio:1;padding:0;box-shadow:none;border:0;background:#d8c9a0;font-size:16px;line-height:1}
+.x{color:#c0392b}.o{color:#1f5fbf}
+.me{color:#5fd38d}.turn{outline:3px solid #f2b84b}
+.pl{display:flex;gap:6px;align-items:center;padding:4px;margin:2px}
+.out{opacity:.4;text-decoration:line-through}
+canvas{border:2px solid #000}
+</style></head><body>
+<div id="app">
+<div id="main"></div>
+<div id="side"><div class="box"><h1 style="font-size:16px">CHAT</h1><div id="log"></div>
+<div class="row"><input id="ci" maxlength="200" placeholder="Nói gì đó..." style="flex:1;min-width:0"><button id="cs">Gửi</button></div></div></div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+let ws,me={},room=null,lob={rooms:[],online:0},tEnd=0;
+const GN={caro:'Cờ Caro',noitu:'Nối Từ'};
+const send=o=>ws&&ws.readyState==1&&ws.send(JSON.stringify(o));
+function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function av(name,sz=32){const c=el('canvas');c.width=c.height=8;c.style.width=c.style.height=sz+'px';const x=c.getContext('2d');let h=0;for(const ch of name)h=(h*31+ch.charCodeAt(0))>>>0;x.fillStyle='hsl('+h%360+' 60% 55%)';for(let y=0;y<8;y++)for(let i=0;i<4;i++){h=(h*1103515245+12345)>>>0;if(h>>16&1){x.fillRect(i,y,1,1);x.fillRect(7-i,y,1,1)}}return c}
+function addChat(m){const d=el('div');d.append(el('b',0,m.name+': '),document.createTextNode(m.text));$('#log').append(d);$('#log').scrollTop=1e9}
+function conn(name){
+  ws=new WebSocket((location.protocol=='https:'?'wss://':'ws://')+location.host);
+  ws.onopen=()=>send({t:'hello',name});
+  ws.onmessage=e=>{const m=JSON.parse(e.data);
+    if(m.t=='me')me=m;
+    else if(m.t=='lobby'){lob=m;if(!room)draw()}
+    else if(m.t=='room'){if(!room||room.code!=m.code)$('#log').innerHTML='';room=m;tEnd=Date.now()+m.ms;draw()}
+    else if(m.t=='left'){room=null;$('#log').innerHTML='';draw()}
+    else if(m.t=='chat')addChat(m);
+    else if(m.t=='err')alert(m.msg)};
+  ws.onclose=()=>setTimeout(()=>conn(name),2000);
+}
+function login(){
+  const b=el('div','box');b.append(el('h1',0,'PIXEL HUB'),el('p',0,'Nhập tên để vào chơi (không cần đăng ký)'));
+  const i=el('input');i.maxLength=16;i.placeholder='Tên của bạn';i.value=localStorage.getItem('n')||'';
+  const g=el('button',0,'Vào');
+  const go=()=>{const n=i.value.trim()||('Khỉ '+(Math.random()*99|0));try{localStorage.setItem('n',n)}catch{}conn(n);};
+  g.onclick=go;i.onkeydown=e=>e.key=='Enter'&&go();
+  b.append(i,' ',g);$('#main').replaceChildren(b);
+}
+function draw(){
+  const m=$('#main');
+  if(!room){
+    const h=el('div','box');h.append(el('h1',0,'PIXEL HUB'),el('div',0,'Online: '+lob.online+' · Bạn là: '+me.name));
+    const c=el('div','box');c.append(el('div',0,'Tạo phòng:'));
+    const r1=el('div','row');
+    for(const k in GN){const b=el('button',0,GN[k]);b.onclick=()=>send({t:'create',game:k,pub:$('#pub').checked});r1.append(b)}
+    const l=el('label',0,' công khai');const p=el('input');p.type='checkbox';p.id='pub';p.checked=true;l.prepend(p);r1.append(l);c.append(r1);
+    const r2=el('div','row');const ci=el('input');ci.placeholder='Mã phòng bạn bè gửi';ci.size=14;
+    const jb=el('button',0,'Vào phòng');jb.onclick=()=>send({t:'join',code:ci.value});r2.append(ci,jb);c.append(r2);
+    const rl=el('div','box');rl.append(el('div',0,'Phòng công khai:'));
+    if(!lob.rooms.length)rl.append(el('div',0,'(chưa có phòng, hãy tạo một phòng!)'));
+    lob.rooms.forEach(x=>{const r=el('div','row');r.append(el('span',0,GN[x.game]+' · '+x.host+' · '+x.n+'/'+x.max));
+      const b=el('button',0,x.on||x.n>=x.max?'Đầy':'Vào');b.disabled=x.on||x.n>=x.max;b.onclick=()=>send({t:'join',code:x.code});r.append(b);rl.append(r)});
+    m.replaceChildren(h,c,rl);return;
+  }
+  const g=room.g,top=el('div','box');
+  top.append(el('h1',0,GN[room.game]+' · MÃ '+room.code));
+  const r=el('div','row');
+  const lv=el('button',0,'Rời phòng');lv.onclick=()=>send({t:'leave'});r.append(lv);
+  const cp=el('button',0,'Chép mã');cp.onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(room.code);r.append(cp);
+  if(room.host==me.id&&!room.on){const s=el('button',0,g?'Chơi lại':'Bắt đầu');s.disabled=room.players.length<2;s.onclick=()=>send({t:'start'});r.append(s)}
+  top.append(r);
+  const pl=el('div','box');
+  room.players.forEach((p,i)=>{const d=el('div','pl'+(room.on&&g&&room.players[g.turn]==p?' turn':'')+(g&&g.out&&g.out.includes(p.id)?' out':''));
+    d.append(av(p.name),el('span',p.id==me.id?'me':'',p.name+(p.id==room.host?' ★':'')+(room.game=='caro'&&g?(i?' (O)':' (X)'):'')));pl.append(d)});
+  if(room.players.length<2)pl.append(el('div',0,'Đang chờ người chơi... gửi mã '+room.code+' cho bạn bè.'));
+  const area=el('div','box');
+  if(g){
+    const w=g.win,st=el('div',0);
+    const wn=room.players.find(p=>p.id==w);
+    st.textContent=w?(w==-1?'Hòa!':'🏆 '+(wn?wn.name:'?')+' thắng!'):'Lượt: '+room.players[g.turn].name;
+    area.append(st);
+    if(room.game=='caro'){
+      const bd=el('div','g');
+      g.b.forEach((v,i)=>{const b=el('button',v==1?'x':'o',v?(v==1?'X':'O'):'');b.onclick=()=>send({t:'move',i});bd.append(b)});
+      area.append(bd);
+    }else{
+      const ws_=el('div');ws_.style.cssText='max-height:200px;overflow:auto;margin:8px 0';
+      g.words.forEach(x=>{const p=room.players.find(q=>q.id==x.by);ws_.append(el('div',0,(p?p.name:'?')+': '+x.w))});
+      area.append(ws_);
+      if(room.on){
+        area.append(el('div',0,'Từ cuối: '+(g.words.length?g.words[g.words.length-1].w:'(tự do, 2 tiếng)')+' — ⏳ '));
+        const tm=el('b',0,'');tm.id='tm';area.lastChild.append(tm);
+        const i=el('input');i.placeholder='Nhập từ 2 tiếng';const b=el('button',0,'Gửi');
+        const sd=()=>{send({t:'move',w:i.value});i.value=''};b.onclick=sd;i.onkeydown=e=>e.key=='Enter'&&sd();
+        const rr=el('div','row');rr.append(i,b);area.append(rr);
+      }
+    }
+  }else area.append(el('div',0,'Chủ phòng bấm "Bắt đầu" khi đủ người.'));
+  m.replaceChildren(top,pl,area);
+}
+setInterval(()=>{const t=$('#tm');if(t)t.textContent=Math.max(0,Math.ceil((tEnd-Date.now())/1000))+'s'},250);
+const sendChat=()=>{const i=$('#ci');send({t:'chat',text:i.value});i.value=''};
+$('#cs').onclick=sendChat;$('#ci').onkeydown=e=>e.key=='Enter'&&sendChat();
+login();
+</script></body></html>
