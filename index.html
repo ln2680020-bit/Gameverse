@@ -1,116 +1,373 @@
 <!doctype html>
-<html lang="vi"><head><meta charset="utf-8">
+<html lang="vi">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pixel Hub</title>
+<meta name="theme-color" content="#101B2B">
+<title>GameVerse — One Universe. Endless Games.</title>
 <style>
-*{box-sizing:border-box;image-rendering:pixelated}
-body{margin:0;background:#14121f;color:#eee;font:bold 15px/1.4 "Courier New",monospace}
-h1{color:#f2b84b;text-shadow:3px 3px #000;margin:0 0 10px}
-button,input{font:inherit;border:3px solid #000;padding:8px 12px;background:#f2b84b;color:#000;cursor:pointer;box-shadow:3px 3px #000}
-button:active{transform:translate(2px,2px);box-shadow:1px 1px #000}
-button:disabled{background:#555;color:#999;cursor:default}
-input{background:#fff;cursor:text;box-shadow:none}
-.box{background:#241f3a;border:3px solid #000;box-shadow:4px 4px #000;padding:10px;margin-bottom:12px}
-#app{display:flex;gap:12px;padding:12px;max-width:1000px;margin:auto;flex-wrap:wrap}
-#main{flex:1 1 480px;min-width:0}#side{flex:1 1 260px}
-#log{height:260px;overflow-y:auto;font-size:13px;word-break:break-word}
-#log b{color:#f2b84b}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
-.g{display:grid;grid-template-columns:repeat(15,1fr);gap:1px;background:#000;border:3px solid #000;max-width:480px}
-.g button{aspect-ratio:1;padding:0;box-shadow:none;border:0;background:#d8c9a0;font-size:16px;line-height:1}
-.x{color:#c0392b}.o{color:#1f5fbf}
-.me{color:#5fd38d}.turn{outline:3px solid #f2b84b}
-.pl{display:flex;gap:6px;align-items:center;padding:4px;margin:2px}
-.out{opacity:.4;text-decoration:line-through}
-canvas{border:2px solid #000}
-</style></head><body>
-<div id="app">
-<div id="main"></div>
-<div id="side"><div class="box"><h1 style="font-size:16px">CHAT</h1><div id="log"></div>
-<div class="row"><input id="ci" maxlength="200" placeholder="Nói gì đó..." style="flex:1;min-width:0"><button id="cs">Gửi</button></div></div></div>
+:root{--bg:#101B2B;--panel:#19283B;--panel2:#24364B;--line:#34485F;--text:#EAF2F7;--muted:#A9BACB;--accent:#42D6C5;--accent2:#42D6C5;--blue:#4C91F0;--coral:#FF806B;--danger:#FF806B;--shadow:4px 4px 0 #091321}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 "Trebuchet MS",system-ui,sans-serif;image-rendering:pixelated}
+button,input{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.45}
+.shell{max-width:1320px;margin:auto;min-height:100vh;padding:0 22px}
+.topbar{height:66px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:20px}
+.brand{display:flex;align-items:center;gap:11px;font-size:21px;font-weight:900;letter-spacing:-.5px}
+.brand-mark{width:38px;height:38px;display:grid;place-items:center;background:var(--accent);color:#10252b;border:2px solid #8df3e5;border-radius:7px;box-shadow:3px 3px 0 #236f70;font-size:22px}
+.brand span:last-child{color:var(--accent)}
+.top-actions{display:flex;align-items:center;gap:10px}
+.online{color:var(--muted);font-size:13px}.online i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent2);margin-right:7px}
+.profile{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--text);font-weight:700}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:18px;padding:22px 0}
+main{min-width:0}
+.welcome{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:2px 0 16px}
+h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:-1.2px}
+.sub{margin:0;color:var(--muted)}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px}
+.section-head h2{font-size:16px;margin:0}
+.joinbar{display:flex;gap:8px;max-width:680px;padding:7px;background:var(--panel);border:1px solid var(--line);border-radius:9px;box-shadow:2px 2px 0 #0a101b}
+.joinbar .field{background:#111b28}
+.joinbar .btn{min-width:108px}
+.room-card{box-shadow:2px 2px 0 #0a101b}
+.chat-toggle{display:none;background:transparent;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:4px 8px}
+
+.pill{font-size:12px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:4px 9px}
+.search{width:min(100%,320px);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--text);outline:none}
+.search:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 2px #42d6c522}
+.games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.game-card{display:flex;align-items:center;gap:11px;padding:11px;background:var(--panel);border:1px solid var(--line);border-radius:9px;box-shadow:2px 2px 0 #0a101b;transition:.16s}
+.game-card:hover{transform:translateY(-2px);border-color:#60758b;box-shadow:var(--shadow)}
+.game-icon{width:48px;height:48px;flex:none;border-radius:7px;display:grid;place-items:center;font-size:27px;background:#26394a;border:1px solid #435a6e;box-shadow:inset -3px -3px 0 #172333}
+.game-card h3{margin:0 0 3px;font-size:15px}.game-card p{margin:0;color:var(--muted);font-size:13px}
+.game-info{flex:1;min-width:0}
+.btn{border:0;border-radius:6px;padding:9px 12px;font-weight:800;box-shadow:2px 2px 0 #091321;background:var(--accent);color:#10252b}
+.btn:hover{filter:brightness(1.06)}
+.btn.secondary{background:var(--blue);color:#07182b;border:1px solid #80b2ff}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn.small{padding:7px 11px;font-size:13px}
+.rooms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.room-card{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+.room-symbol{width:34px;height:34px;display:grid;place-items:center;background:var(--panel2);border:1px solid #3b5871;border-radius:10px;font-size:22px}
+.room-meta{flex:1;min-width:0}.room-meta strong{display:block}.room-meta small{color:var(--muted)}
+.empty{padding:22px;text-align:center;color:var(--muted);background:var(--panel);border:1px dashed var(--line);border-radius:12px}
+.side{min-width:0}
+.chatbox{position:sticky;top:18px;background:var(--panel);border:1px solid var(--line);border-radius:9px;overflow:hidden;display:flex;flex-direction:column;height:min(610px,calc(100vh - 100px));min-height:390px}
+.chat-head{padding:12px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.chat-head h2{font-size:16px;margin:0}.chat-head small{color:var(--muted)}
+#log{padding:14px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:9px;font-size:13px;word-break:break-word}
+.chat-line{background:var(--panel2);padding:8px 10px;border-radius:9px;color:#dce5eb}
+.chat-line b{color:var(--accent);margin-right:5px}
+.chat-compose{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.chat-compose input,.field{min-width:0;flex:1;background:#111b28;border:1px solid var(--line);border-radius:9px;padding:10px 11px;color:var(--text);outline:none}
+.chat-compose button{flex:none}
+.notice{font-size:12px;color:var(--muted);padding:0 14px 12px}
+.room-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.room-title{min-width:0}.room-title h1{font-size:25px}.room-title p{margin:0;color:var(--muted);font-size:13px}
+.room-actions{display:flex;gap:8px;flex-wrap:wrap}
+.player-strip{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.player{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);padding:7px 10px;border-radius:9px;font-size:13px}
+.avatar{width:25px;height:25px;border-radius:7px;display:inline-grid;place-items:center;background:#38566a;font-size:14px}
+.player.me{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 1px #42d6c522}
+.play-area{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:14px;min-height:320px}
+.game-status{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;color:var(--muted)}
+.board{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));gap:3px;max-width:570px;margin:auto;background:#111b28;padding:7px;border-radius:10px}
+.board button{aspect-ratio:1;min-width:0;border:1px solid #46576a;border-radius:4px;background:#d9d1b8;color:#19212b;font-weight:900;font-size:clamp(9px,1.5vw,17px);padding:0}
+.board button.x{color:#d45f54}.board button.o{color:#3476a8}
+.word-list{max-width:540px;margin:0 auto 14px;display:grid;gap:7px;max-height:230px;overflow:auto}
+.word-item{padding:9px 12px;background:var(--panel2);border-radius:8px}
+.word-form{max-width:540px;margin:auto;display:flex;gap:8px}
+.word-form input{flex:1;min-width:0}
+.start-note{text-align:center;color:var(--muted);padding:70px 10px}
+.footer{border-top:1px solid var(--line);padding:18px 0 25px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between}
+.hidden{display:none!important}
+@media(min-width:1100px){.rooms{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:900px){.rooms{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{grid-template-columns:1fr}.chatbox{position:static;height:400px;min-height:340px}.side{order:2}}
+@media(max-width:640px){
+ .shell{padding:0 12px}.topbar{height:58px}.brand{font-size:19px}.brand-mark{width:32px;height:32px;font-size:18px}.online{display:none}
+ .layout{padding:14px 0;gap:13px}.welcome{display:block;margin-bottom:12px}h1{font-size:23px}.search{margin-top:10px;width:100%;padding:10px}
+ .joinbar{max-width:none}.joinbar .btn{min-width:82px;padding:8px}.joinbar .field{padding:9px;font-size:13px}
+ .rooms{grid-template-columns:1fr}.section-head{margin:16px 0 8px}.games{grid-template-columns:1fr;gap:7px}.game-card{padding:9px;gap:10px}.game-icon{width:40px;height:40px;font-size:23px}.game-card h3{font-size:14px}.game-card p{font-size:12px}
+ .btn.small{padding:7px 9px;font-size:12px}.room-card{padding:8px;gap:8px}.room-symbol{width:31px;height:31px;font-size:18px}.room-meta strong{font-size:13px}.room-meta small{font-size:11px}
+ .chat-toggle{display:inline-block}.chatbox{height:auto;min-height:0}.chatbox #log,.chatbox .chat-compose,.chatbox>.notice{display:none}.chatbox.mobile-open #log{display:flex;height:210px;min-height:210px}.chatbox.mobile-open .chat-compose,.chatbox.mobile-open>.notice{display:flex}.chatbox.mobile-open>.notice{display:block}
+ .footer{padding:12px 0;display:block}.footer span{display:block;margin-top:3px}
+}
+@media(max-width:600px){.shell{padding:0 14px}.topbar{height:64px}.online{display:none}.layout{padding:18px 0}.welcome{display:block}.search{margin-top:14px;width:100%}.games{grid-template-columns:1fr}.game-card{padding:13px}.game-icon{width:56px;height:56px}.room-top{align-items:flex-start;flex-direction:column}.play-area{padding:10px}.board{gap:2px;padding:4px}.footer{display:block}.footer span{display:block;margin-top:5px}}
+
+/* GameVerse portal layout */
+.layout{grid-template-columns:170px minmax(0,1fr) 285px;gap:16px}
+.nav-side{display:flex;flex-direction:column;gap:7px;min-width:0;padding:14px 9px;background:#0c1725;border:1px solid var(--line);border-radius:10px;min-height:calc(100vh - 125px);position:sticky;top:12px;align-self:start}
+.nav-label{font-size:10px;letter-spacing:2px;color:var(--muted);padding:5px 9px 9px;font-weight:900}
+.nav-link{width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:0;background:transparent;color:var(--muted);padding:11px 10px;border-radius:7px;font-weight:800}
+.nav-link:hover,.nav-link.active{background:#1b3446;color:var(--accent)}
+.nav-spacer{flex:1;min-height:35px}.nav-foot{font-size:11px;line-height:1.7;color:#70869b;padding:10px 9px;border-top:1px solid var(--line)}
+.catalog-group{margin:22px 0 10px}.catalog-title{display:flex;align-items:center;gap:9px;font-size:14px;letter-spacing:1.5px;font-weight:900;margin:0 0 11px;color:var(--text)}
+.catalog-title:after{content:"";height:1px;background:var(--line);flex:1}.catalog-count{font-size:11px;color:var(--muted);background:var(--panel2);padding:3px 7px;border-radius:20px;letter-spacing:0}
+.catalog-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.catalog-card{position:relative;min-width:0;display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 7px;background:var(--panel);border:1px solid var(--line);border-radius:9px;text-align:center;color:var(--text)}
+.catalog-card .game-icon{width:58px;height:58px;font-size:30px}.catalog-card strong{font-size:13px}.catalog-card small{font-size:11px;color:var(--muted)}
+.catalog-card.soon{opacity:.62}.catalog-card.soon:after{content:"SẮP RA MẮT";font-size:8px;font-weight:900;letter-spacing:.4px;color:#10252b;background:var(--coral);padding:3px 5px;border-radius:4px;position:absolute;top:5px;right:4px}
+.catalog-card:not(.soon){cursor:pointer}.catalog-card:not(.soon):hover{border-color:var(--accent);transform:translateY(-2px)}
+#public-rooms{scroll-margin-top:15px}#catalog{scroll-margin-top:15px}#home{scroll-margin-top:15px}
+@media(max-width:1100px){.layout{grid-template-columns:145px minmax(0,1fr)}.side{grid-column:2}.nav-side{grid-row:1 / span 2;min-height:500px}.catalog-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.nav-side{position:static;min-height:0;flex-direction:row;overflow:auto;padding:6px;gap:5px}.nav-label,.nav-spacer,.nav-foot{display:none}.nav-link{width:auto;white-space:nowrap;justify-content:center;padding:9px 11px;font-size:12px}.side{grid-column:1}.catalog-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:430px){.catalog-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.catalog-card{padding:9px 4px}.catalog-card .game-icon{width:48px;height:48px;font-size:25px}.catalog-card strong{font-size:11px}.catalog-card small{font-size:10px}}
+
+/* Private room dialog */
+.modal-backdrop{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:#050b14cc;backdrop-filter:blur(4px)}
+.toast-stack{position:fixed;right:18px;top:82px;z-index:80;display:grid;gap:8px;width:min(360px,calc(100vw - 28px));pointer-events:none}
+.toast-message{background:#21354a;border:1px solid #55718a;border-left:4px solid var(--accent);color:var(--text);padding:11px 13px;border-radius:8px;box-shadow:4px 4px 0 #080f19;font-size:13px;animation:toast-in .18s ease-out}
+.toast-message.error{border-left-color:var(--coral)}
+@keyframes toast-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.room-dialog{width:min(100%,440px);background:var(--panel);border:1px solid #496078;border-radius:12px;padding:20px;box-shadow:8px 8px 0 #080f19}
+.room-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+.room-dialog h2{margin:0;font-size:21px}.room-dialog p{margin:5px 0 16px;color:var(--muted);font-size:13px}
+.dialog-close{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:7px;width:34px;height:34px;font-size:20px}
+.dialog-choice{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:12px;margin:8px 0;background:#122033;border:1px solid var(--line);border-radius:9px;color:var(--text)}
+.dialog-choice.selected{border-color:var(--accent);background:#1b3947;box-shadow:0 0 0 1px #42d6c533}
+.dialog-choice .game-icon{width:44px;height:44px;font-size:24px}.dialog-choice span:last-child{display:grid;gap:2px}.dialog-choice small{color:var(--muted)}
+.dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:16px}
+@media(max-width:480px){.room-dialog{padding:16px}.room-dialog h2{font-size:19px}.dialog-actions .btn{flex:1}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="topbar">
+ <div class="brand"><span class="brand-mark">🎮</span>Game<span>Verse</span></div>
+ <div class="top-actions"><div class="online"><i></i><span id="online">Đang kết nối</span></div><button class="profile" id="profile" type="button" title="Nhấn để đổi tên người chơi">Khách · Đổi tên</button></div>
+</header>
+<div class="layout">
+ <nav class="nav-side hidden" id="navside" aria-label="Điều hướng GameVerse">
+ <div class="nav-label">MENU</div>
+ <button class="nav-link active" data-go="home">🎮 <span>Chơi</span></button>
+ <button class="nav-link" data-go="catalog">▦ <span>Danh mục game</span></button>
+ <button class="nav-link" data-go="public-rooms">▤ <span>Phòng công khai</span></button>
+ <button class="nav-link" data-go="chat-panel">▣ <span>Trò chuyện</span></button>
+ <div class="nav-spacer"></div>
+ <div class="nav-foot">One Universe.<br>Endless Games.</div>
+</nav>
+ <main id="main">
+  <div class="welcome"><div><h1>Chọn game. Gọi bạn bè. Bắt đầu!</h1><p class="sub">Chơi cùng nhau, ngay trên trình duyệt.</p></div><input class="search" id="search" placeholder="Tìm trò chơi hoặc phòng..."></div>
+  <div class="section-head"><h2>Trò chơi</h2><span class="pill">Đang có 2 game</span></div>
+  <div class="games">
+   <article class="game-card"><div class="game-icon">⭕</div><div class="game-info"><h3>Cờ Caro</h3><p>Đối đầu 1 vs 1 · 2 người</p></div><button class="btn small" onclick="createRoom('caro')">Chơi</button></article>
+   <article class="game-card"><div class="game-icon">🔤</div><div class="game-info"><h3>Nối Từ</h3><p>Nối từ cùng bạn bè · Tối đa 6 người</p></div><button class="btn small" onclick="createRoom('noitu')">Chơi</button></article>
+  </div>
+  <div class="section-head"><h2>Phòng công khai</h2><span class="pill" id="room-count">0 phòng</span></div>
+  <div class="rooms" id="rooms"><div class="empty">Chưa có phòng nào. Hãy tạo phòng đầu tiên!</div></div>
+ </main>
+ <aside class="side"><section class="chatbox">
+  <div class="chat-head"><h2 id="chat-title">Trò chuyện sảnh</h2><button class="chat-toggle" id="chat-toggle" type="button">Mở chat</button><small id="chat-state">Mọi người</small></div>
+  <div id="log"><div class="notice">Chào mừng đến GameVerse! Hãy nói lời chào với mọi người.</div></div>
+  <div class="chat-compose"><input id="ci" maxlength="200" placeholder="Nhắn tin..."><button class="btn small" id="cs">Gửi</button></div>
+  <div class="notice">Hãy trò chuyện lịch sự và tôn trọng người chơi khác.</div>
+ </section></aside>
+</div>
+<footer class="footer"><strong>GameVerse</strong><span>One Universe. Endless Games.</span></footer>
 </div>
 <script>
 const $=s=>document.querySelector(s);
-let ws,me={},room=null,lob={rooms:[],online:0},tEnd=0;
-const GN={caro:'Cờ Caro',noitu:'Nối Từ'};
-const send=o=>ws&&ws.readyState==1&&ws.send(JSON.stringify(o));
+let ws,me={},room=null,lob={rooms:[],online:0},tEnd=0,enteredLobby=false,inviteAttempted=false;
+const GN={caro:'Cờ Caro',noitu:'Nối Từ'},GI={caro:'⭕',noitu:'🔤'};
+const send=o=>{if(ws&&ws.readyState===1){ws.send(JSON.stringify(o));return true;}$('#online').textContent='Chưa kết nối máy chủ';return false;};
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
-function av(name,sz=32){const c=el('canvas');c.width=c.height=8;c.style.width=c.style.height=sz+'px';const x=c.getContext('2d');let h=0;for(const ch of name)h=(h*31+ch.charCodeAt(0))>>>0;x.fillStyle='hsl('+h%360+' 60% 55%)';for(let y=0;y<8;y++)for(let i=0;i<4;i++){h=(h*1103515245+12345)>>>0;if(h>>16&1){x.fillRect(i,y,1,1);x.fillRect(7-i,y,1,1)}}return c}
-function addChat(m){const d=el('div');d.append(el('b',0,m.name+': '),document.createTextNode(m.text));$('#log').append(d);$('#log').scrollTop=1e9}
+function showToast(message,type='info'){
+ let stack=$('#toast-stack');
+ if(!stack){stack=el('div','toast-stack');stack.id='toast-stack';stack.setAttribute('aria-live','polite');stack.setAttribute('aria-atomic','false');document.body.append(stack);}
+ const item=el('div','toast-message'+(type==='error'?' error':''),message);item.setAttribute('role','status');stack.append(item);
+ setTimeout(()=>{item.style.opacity='0';item.style.transform='translateY(-5px)';setTimeout(()=>item.remove(),180);},3200);
+}
+function addChat(m){const d=el('div','chat-line');d.append(el('b',0,m.name+':'),document.createTextNode(m.text));$('#log').append(d);$('#log').scrollTop=$('#log').scrollHeight}
+function setChatTitle(){ $('#chat-title').textContent=room?'Chat phòng '+room.code:'Trò chuyện sảnh';$('#chat-state').textContent=room?'Người trong phòng':'Mọi người';}
 function conn(name){
-  ws=new WebSocket((location.protocol=='https:'?'wss://':'ws://')+location.host);
-  ws.onopen=()=>send({t:'hello',name});
-  ws.onmessage=e=>{const m=JSON.parse(e.data);
-    if(m.t=='me')me=m;
-    else if(m.t=='lobby'){lob=m;if(!room)draw()}
-    else if(m.t=='room'){if(!room||room.code!=m.code)$('#log').innerHTML='';room=m;tEnd=Date.now()+m.ms;draw()}
-    else if(m.t=='left'){room=null;$('#log').innerHTML='';draw()}
-    else if(m.t=='chat')addChat(m);
-    else if(m.t=='err')alert(m.msg)};
-  ws.onclose=()=>setTimeout(()=>conn(name),2000);
+ try{ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host);}catch(e){$('#online').textContent='Không tạo được kết nối';return;}
+ ws.onopen=()=>{send({t:'hello',name});$('#online').textContent='Đã kết nối máy chủ';const inviteCode=new URLSearchParams(location.search).get('room');if(inviteCode&&!inviteAttempted){inviteAttempted=true;setTimeout(()=>{if(!send({t:'join',code:inviteCode.toUpperCase()}))$('#online').textContent='Không thể vào phòng mời';},150);}};
+ ws.onerror=()=>{$('#online').textContent='Lỗi kết nối máy chủ';};
+ ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}
+  if(m.t==='me'){me=m;$('#profile').textContent=m.name+' · Đổi tên'}
+  else if(m.t==='lobby'){lob=m;enteredLobby=true;$('#online').textContent=m.online+' người online';if(!room)drawLobby();setChatEnabled(true)}
+  else if(m.t==='room'){if(!room||room.code!==m.code)$('#log').replaceChildren();room=m;tEnd=Date.now()+m.ms;setChatTitle();drawRoom()}
+  else if(m.t==='left'){room=null;setChatTitle();$('#log').replaceChildren(el('div','notice','Bạn đã rời phòng.'));drawLobby()}
+  else if(m.t==='chat')addChat(m);
+  else if(m.t==='err')showToast(m.msg);
+ };
+ ws.onclose=()=>{ $('#online').textContent='Mất kết nối · Đang thử lại';setTimeout(()=>{if(!ws||ws.readyState===WebSocket.CLOSED)conn(name);},2500);};
 }
+function setChatEnabled(enabled){const input=$('#ci'),button=$('#cs');input.disabled=!enabled;button.disabled=!enabled;input.placeholder=enabled?'Viết bình luận hoặc lời nhắn...':'Vào sảnh để bình luận';}
 function login(){
-  const b=el('div','box');b.append(el('h1',0,'PIXEL HUB'),el('p',0,'Nhập tên để vào chơi (không cần đăng ký)'));
-  const i=el('input');i.maxLength=16;i.placeholder='Tên của bạn';i.value=localStorage.getItem('n')||'';
-  const g=el('button',0,'Vào');
-  const go=()=>{const n=i.value.trim()||('Khỉ '+(Math.random()*99|0));try{localStorage.setItem('n',n)}catch{}conn(n);};
-  g.onclick=go;i.onkeydown=e=>e.key=='Enter'&&go();
-  b.append(i,' ',g);$('#main').replaceChildren(b);
+ $('#navside').classList.add('hidden');
+ enteredLobby=false;setChatEnabled(false);
+ const main=$('#main');main.innerHTML='';
+ const box=el('section','play-area');box.style.maxWidth='480px';box.style.margin='70px auto';
+ box.append(el('h1',0,'Chào mừng đến GameVerse'),el('p','sub','Nhập tên nhân vật của bạn, sau đó nhấn Vào sảnh.'));
+ const row=el('div','word-form');row.style.marginTop='20px';
+ const input=el('input','field');input.type='text';input.disabled=false;input.readOnly=false;input.tabIndex=0;input.maxLength=16;input.placeholder='Tên nhân vật';input.setAttribute('aria-label','Tên nhân vật');input.autocomplete='nickname';input.spellcheck=false;input.style.pointerEvents='auto';input.style.position='relative';input.style.zIndex='2';input.value=localStorage.getItem('gv_name')||'';
+ const status=el('p','sub','Tên này sẽ hiển thị với những người chơi khác.');status.style.marginTop='10px';
+ const btn=el('button','btn','Vào sảnh');const go=()=>{const n=input.value.trim();if(!n){status.textContent='Bạn hãy nhập tên trước khi vào sảnh.';status.style.color='var(--danger)';input.focus();return;}try{localStorage.setItem('gv_name',n)}catch{}btn.disabled=true;status.textContent='Đang kết nối máy chủ...';status.style.color='var(--muted)';conn(n);const old=main.querySelector('.connect-error');if(old)old.remove();const timer=setTimeout(()=>{if(!ws||ws.readyState!==WebSocket.OPEN){btn.disabled=false;status.textContent='Chưa kết nối được. Hãy kiểm tra máy chủ rồi thử lại.';status.style.color='var(--danger)';}},7000);const check=()=>{if(ws&&ws.readyState===WebSocket.OPEN){clearTimeout(timer);status.textContent='Đã kết nối. Đang tải sảnh...';}};const poll=setInterval(()=>{if(ws&&ws.readyState===WebSocket.OPEN){check();clearInterval(poll);}else if(Date.now()>0&&btn.disabled===false)clearInterval(poll);},250);};
+ btn.onclick=go;input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go();}});input.addEventListener('input',()=>{status.textContent='Tên này sẽ hiển thị với những người chơi khác.';status.style.color='var(--muted)';});row.append(input,btn);box.append(row,status);main.append(box);input.focus();
 }
-function draw(){
-  const m=$('#main');
-  if(!room){
-    const h=el('div','box');h.append(el('h1',0,'PIXEL HUB'),el('div',0,'Online: '+lob.online+' · Bạn là: '+me.name));
-    const c=el('div','box');c.append(el('div',0,'Tạo phòng:'));
-    const r1=el('div','row');
-    for(const k in GN){const b=el('button',0,GN[k]);b.onclick=()=>send({t:'create',game:k,pub:$('#pub').checked});r1.append(b)}
-    const l=el('label',0,' công khai');const p=el('input');p.type='checkbox';p.id='pub';p.checked=true;l.prepend(p);r1.append(l);c.append(r1);
-    const r2=el('div','row');const ci=el('input');ci.placeholder='Mã phòng bạn bè gửi';ci.size=14;
-    const jb=el('button',0,'Vào phòng');jb.onclick=()=>send({t:'join',code:ci.value});r2.append(ci,jb);c.append(r2);
-    const rl=el('div','box');rl.append(el('div',0,'Phòng công khai:'));
-    if(!lob.rooms.length)rl.append(el('div',0,'(chưa có phòng, hãy tạo một phòng!)'));
-    lob.rooms.forEach(x=>{const r=el('div','row');r.append(el('span',0,GN[x.game]+' · '+x.host+' · '+x.n+'/'+x.max));
-      const b=el('button',0,x.on||x.n>=x.max?'Đầy':'Vào');b.disabled=x.on||x.n>=x.max;b.onclick=()=>send({t:'join',code:x.code});r.append(b);rl.append(r)});
-    m.replaceChildren(h,c,rl);return;
-  }
-  const g=room.g,top=el('div','box');
-  top.append(el('h1',0,GN[room.game]+' · MÃ '+room.code));
-  const r=el('div','row');
-  const lv=el('button',0,'Rời phòng');lv.onclick=()=>send({t:'leave'});r.append(lv);
-  const cp=el('button',0,'Chép mã');cp.onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(room.code);r.append(cp);
-  if(room.host==me.id&&!room.on){const s=el('button',0,g?'Chơi lại':'Bắt đầu');s.disabled=room.players.length<2;s.onclick=()=>send({t:'start'});r.append(s)}
-  top.append(r);
-  const pl=el('div','box');
-  room.players.forEach((p,i)=>{const d=el('div','pl'+(room.on&&g&&room.players[g.turn]==p?' turn':'')+(g&&g.out&&g.out.includes(p.id)?' out':''));
-    d.append(av(p.name),el('span',p.id==me.id?'me':'',p.name+(p.id==room.host?' ★':'')+(room.game=='caro'&&g?(i?' (O)':' (X)'):'')));pl.append(d)});
-  if(room.players.length<2)pl.append(el('div',0,'Đang chờ người chơi... gửi mã '+room.code+' cho bạn bè.'));
-  const area=el('div','box');
-  if(g){
-    const w=g.win,st=el('div',0);
-    const wn=room.players.find(p=>p.id==w);
-    st.textContent=w?(w==-1?'Hòa!':'🏆 '+(wn?wn.name:'?')+' thắng!'):'Lượt: '+room.players[g.turn].name;
-    area.append(st);
-    if(room.game=='caro'){
-      const bd=el('div','g');
-      g.b.forEach((v,i)=>{const b=el('button',v==1?'x':'o',v?(v==1?'X':'O'):'');b.onclick=()=>send({t:'move',i});bd.append(b)});
-      area.append(bd);
-    }else{
-      const ws_=el('div');ws_.style.cssText='max-height:200px;overflow:auto;margin:8px 0';
-      g.words.forEach(x=>{const p=room.players.find(q=>q.id==x.by);ws_.append(el('div',0,(p?p.name:'?')+': '+x.w))});
-      area.append(ws_);
-      if(room.on){
-        area.append(el('div',0,'Từ cuối: '+(g.words.length?g.words[g.words.length-1].w:'(tự do, 2 tiếng)')+' — ⏳ '));
-        const tm=el('b',0,'');tm.id='tm';area.lastChild.append(tm);
-        const i=el('input');i.placeholder='Nhập từ 2 tiếng';const b=el('button',0,'Gửi');
-        const sd=()=>{send({t:'move',w:i.value});i.value=''};b.onclick=sd;i.onkeydown=e=>e.key=='Enter'&&sd();
-        const rr=el('div','row');rr.append(i,b);area.append(rr);
-      }
-    }
-  }else area.append(el('div',0,'Chủ phòng bấm "Bắt đầu" khi đủ người.'));
-  m.replaceChildren(top,pl,area);
+function changePlayerName(){
+ if(!ws||ws.readyState!==WebSocket.OPEN){showToast('Chưa kết nối máy chủ. Hãy đợi kết nối rồi thử lại.');return;}
+ const current=me.name||localStorage.getItem('gv_name')||'';
+ const backdrop=el('div','modal-backdrop');
+ const dialog=el('section','room-dialog');
+ dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','rename-dialog-title');
+ const head=el('div','room-dialog-head'),heading=el('div');
+ const title=el('h2',0,'Đổi tên người chơi');title.id='rename-dialog-title';
+ heading.append(title,el('p',0,'Tên mới sẽ hiển thị với những người chơi khác (tối đa 16 ký tự).'));
+ const close=el('button','dialog-close','×');close.type='button';close.setAttribute('aria-label','Đóng');
+ head.append(heading,close);dialog.append(head);
+ const input=el('input','field');input.type='text';input.maxLength=16;input.value=current;input.placeholder='Tên người chơi mới';input.autocomplete='nickname';input.setAttribute('aria-label','Tên người chơi mới');
+ const error=el('p','sub','');error.style.minHeight='20px';error.style.margin='8px 0 0';error.style.color='var(--danger)';
+ dialog.append(input,error);
+ const actions=el('div','dialog-actions'),cancel=el('button','btn ghost','Hủy'),save=el('button','btn','Lưu tên');
+ cancel.type=save.type='button';
+ const dismiss=()=>{backdrop.remove();document.removeEventListener('keydown',onKey);};
+ const onKey=e=>{if(e.key==='Escape')dismiss();if(e.key==='Enter'&&backdrop.isConnected)save.click();};
+ close.onclick=cancel.onclick=dismiss;
+ save.onclick=()=>{
+  const name=input.value.trim().slice(0,16);
+  if(!name){error.textContent='Tên người chơi không được để trống.';input.focus();return;}
+  if(!send({t:'hello',name})){error.textContent='Mất kết nối máy chủ. Hãy thử lại khi đã kết nối.';return;}
+  try{localStorage.setItem('gv_name',name)}catch{}
+  $('#profile').textContent=name+' · Đổi tên';
+  dismiss();
+ };
+ actions.append(cancel,save);dialog.append(actions);backdrop.append(dialog);
+ backdrop.addEventListener('click',e=>{if(e.target===backdrop)dismiss();});
+ document.addEventListener('keydown',onKey);document.body.append(backdrop);input.focus();input.select();
 }
-setInterval(()=>{const t=$('#tm');if(t)t.textContent=Math.max(0,Math.ceil((tEnd-Date.now())/1000))+'s'},250);
-const sendChat=()=>{const i=$('#ci');send({t:'chat',text:i.value});i.value=''};
-$('#cs').onclick=sendChat;$('#ci').onkeydown=e=>e.key=='Enter'&&sendChat();
-login();
-</script></body></html>
+$('#profile').addEventListener('click',changePlayerName);
+function createRoom(game,pub=true){if(!send({t:'create',game,pub}))showToast('Chưa kết nối được với máy chủ. Vui lòng thử lại sau.');}
+function createPrivateRoom(){
+ const backdrop=el('div','modal-backdrop');backdrop.setAttribute('role','presentation');
+ const dialog=el('section','room-dialog');dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','private-dialog-title');
+ const head=el('div','room-dialog-head'),heading=el('div');const title=el('h2',0,'Tạo phòng riêng');title.id='private-dialog-title';heading.append(title,el('p',0,'Chọn trò chơi để tạo phòng và mời bạn bè bằng mã phòng.'));
+ const close=el('button','dialog-close','×');close.type='button';close.setAttribute('aria-label','Đóng');close.onclick=()=>backdrop.remove();head.append(heading,close);dialog.append(head);
+ let selected='caro';const choices=[];
+ [['caro','⭕','Cờ Caro','Đối đầu 1 vs 1'],['noitu','🔤','Nối Từ','Tối đa 6 người']].forEach(([id,ico,name,desc])=>{
+  const b=el('button','dialog-choice'+(id===selected?' selected':''));b.type='button';b.setAttribute('aria-pressed',String(id===selected));
+  b.append(el('div','game-icon',ico));const info=el('span');info.append(el('strong',0,name),el('small',0,desc));b.append(info);
+  b.onclick=()=>{selected=id;choices.forEach(x=>{x.classList.toggle('selected',x.dataset.game===selected);x.setAttribute('aria-pressed',String(x.dataset.game===selected));});};
+  b.dataset.game=id;choices.push(b);dialog.append(b);
+ });
+ const actions=el('div','dialog-actions'),cancel=el('button','btn ghost','Hủy'),create=el('button','btn','Tạo phòng');
+ cancel.type=create.type='button';cancel.onclick=()=>backdrop.remove();create.onclick=()=>{backdrop.remove();createRoom(selected,false);};
+ actions.append(cancel,create);dialog.append(actions);backdrop.append(dialog);
+ backdrop.addEventListener('click',e=>{if(e.target===backdrop)backdrop.remove();});
+ const esc=e=>{if(e.key==='Escape'&&backdrop.isConnected){backdrop.remove();document.removeEventListener('keydown',esc);}};
+ document.addEventListener('keydown',esc);document.body.append(backdrop);close.focus();
+}
+function drawLobby(){
+ const m=$('#main');
+ const active=document.activeElement;
+ const keepFocus=active&&m.contains(active)?{placeholder:active.placeholder,value:active.value,start:active.selectionStart,end:active.selectionEnd}:null;
+ m.innerHTML='';
+ $('#navside').classList.remove('hidden');
+ const welcome=el('div','welcome');welcome.id='home';
+ const intro=el('div');intro.append(el('h1',0,'Chơi cùng bạn bè'),el('p','sub','Một thế giới trò chơi. Kết nối bạn bè.')); 
+ const search=el('input','search');search.placeholder='Tìm trò chơi hoặc phòng...';search.value=window.gvSearch||'';
+ welcome.append(intro,search);m.append(welcome);
+ const quick=el('div','joinbar');
+ const code=el('input','field');code.placeholder='Nhập mã phòng bạn bè gửi...';code.maxLength=8;code.autocapitalize='characters';code.value=window.gvCode||'';
+ const join=el('button','btn','Vào phòng');join.onclick=()=>{const v=code.value.trim().toUpperCase();if(v){if(!send({t:'join',code:v}))showToast('Chưa kết nối được với máy chủ.');}else code.focus()};
+ code.oninput=()=>window.gvCode=code.value.toUpperCase();code.onkeydown=e=>e.key==='Enter'&&join.click();
+ const privateBtn=el('button','btn secondary','Tạo phòng riêng');privateBtn.onclick=createPrivateRoom;quick.append(code,join,privateBtn);m.append(quick);
+ const groups=[
+  {title:'BOARD GAME',items:[
+   {id:'caro',name:'Cờ Caro',desc:'2 người',ico:'❎',active:true},
+   {name:'Cờ vua',desc:'2 người',ico:'♞'},
+   {name:'Cờ tướng',desc:'2 người',ico:'🀄'},
+   {name:'Cờ Tỷ Phú',desc:'2–6 người',ico:'🎲'},
+   {name:'Cờ Cá Ngựa',desc:'2–4 người',ico:'🐴'},
+   {name:'Domino',desc:'2–4 người',ico:'🁣'},
+   {name:'Bắn Tàu',desc:'2 người',ico:'🚢'}
+  ]},
+  {title:'BÀI',items:[
+   {name:'Poker',desc:'2–6 người',ico:'🂡'},
+   {name:'Tiến lên',desc:'2–4 người',ico:'🃏'},
+   {name:'Uno',desc:'2–6 người',ico:'🎴'}
+  ]},
+  {title:'GIẢI TRÍ',items:[
+   {id:'noitu',name:'Nối Từ',desc:'Tối đa 6 người',ico:'🔤',active:true},
+   {name:'Ma Sói',desc:'5–12 người',ico:'🐺'}
+  ]}
+ ];
+ const catalog=el('section');catalog.id='catalog';
+ groups.forEach(group=>{
+  const section=el('div','catalog-group');const heading=el('h2','catalog-title');heading.append(document.createTextNode(group.title),el('span','catalog-count',String(group.items.length)));section.append(heading);
+  const grid=el('div','catalog-grid');
+  group.items.forEach(item=>{
+   const card=el('button','catalog-card'+(item.active?'':' soon'));card.type='button';card.dataset.search=(item.name+' '+group.title).toLowerCase();
+   card.append(el('div','game-icon',item.ico),el('strong',0,item.name),el('small',0,item.desc));
+   if(item.active){card.onclick=()=>createRoom(item.id);card.title='Tạo phòng '+item.name;}else{card.disabled=true;card.title='Trò chơi đang được phát triển';}
+   grid.append(card);
+  });
+  section.append(grid);catalog.append(section);
+ });
+ m.append(catalog);
+ const roomSection=el('section');roomSection.id='public-rooms';
+ const roomHead=el('div','section-head');roomHead.append(el('h2',0,'Phòng công khai'),el('span','pill',lob.rooms.length+' phòng'));roomSection.append(roomHead);
+ const list=el('div','rooms');list.id='rooms';
+ if(!lob.rooms.length)list.append(el('div','empty','Chưa có phòng công khai. Hãy tạo phòng và mời bạn bè!'));
+ lob.rooms.forEach(x=>{
+  const card=el('div','room-card');card.dataset.search=(GN[x.game]+' '+x.host+' '+x.code).toLowerCase();card.append(el('div','room-symbol',GI[x.game]||'🎮'));
+  const meta=el('div','room-meta');meta.append(el('strong',0,GN[x.game]+' · '+x.host),el('small',0,x.n+'/'+x.max+' người · Mã '+x.code));
+  const b=el('button','btn small',x.on||x.n>=x.max?'Đầy':'Vào');b.disabled=x.on||x.n>=x.max;b.onclick=()=>send({t:'join',code:x.code});card.append(meta,b);list.append(card);
+ });roomSection.append(list);m.append(roomSection);
+ search.oninput=()=>{window.gvSearch=search.value;const q=search.value.trim().toLowerCase();m.querySelectorAll('[data-search]').forEach(x=>x.classList.toggle('hidden',!x.dataset.search.includes(q)));};
+ document.querySelectorAll('.nav-link').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.nav-link').forEach(x=>x.classList.toggle('active',x===b));
+  const target=b.dataset.go;
+  if(target==='chat-panel'){document.querySelector('.chatbox').scrollIntoView({behavior:'smooth',block:'start'});document.querySelector('.chatbox').classList.add('mobile-open');$('#chat-toggle').textContent='Thu gọn';}
+  else {const node=target==='catalog'?catalog:target==='public-rooms'?roomSection:welcome;node.scrollIntoView({behavior:'smooth',block:'start'});}
+ });
+ if(keepFocus){const target=[...m.querySelectorAll('input')].find(x=>x.placeholder===keepFocus.placeholder);if(target){target.value=keepFocus.value;target.focus();try{target.setSelectionRange(keepFocus.start,keepFocus.end)}catch{}}}
+ setChatTitle();
+}async function copyRoomInvite(button,includeLink){
+ const url=location.origin+location.pathname+'?room='+encodeURIComponent(room.code);
+ const text=includeLink?'Tham gia phòng '+room.code+' trên GameVerse: '+url:room.code;
+ const old=button.textContent;
+ try{
+  if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);
+  else{const temp=el('textarea');temp.value=text;temp.style.position='fixed';temp.style.opacity='0';document.body.append(temp);temp.select();const ok=document.execCommand('copy');temp.remove();if(!ok)throw new Error('copy failed');}
+  button.textContent=includeLink?'Đã sao chép lời mời':'Đã sao chép mã';
+  setTimeout(()=>{if(button.isConnected)button.textContent=old;},1800);
+ }catch(e){
+  button.textContent=includeLink?'Không sao chép được':'Mã: '+room.code;
+  setTimeout(()=>{if(button.isConnected)button.textContent=old;},2500);
+ }
+}
+function drawRoom(){
+ const m=$('#main');m.innerHTML='';
+ const top=el('div','room-top'),title=el('div','room-title');title.append(el('h1',0,GN[room.game]+' · '+room.code),el('p',0,(room.pub===false?'Phòng riêng':'Phòng công khai')+' · Chia sẻ mã để mời bạn bè'));const actions=el('div','room-actions');
+ const copy=el('button','btn secondary small','Sao chép mã');copy.onclick=()=>copyRoomInvite(copy,false);const invite=el('button','btn small','Mời bạn bè');invite.onclick=()=>copyRoomInvite(invite,true);const leave=el('button','btn ghost small','Rời phòng');leave.onclick=()=>send({t:'leave'});actions.append(copy,invite,leave);
+ const allReady=room.players.length>=2&&room.players.every(p=>p.ready);
+ if(room.host===me.id&&!room.on){const start=el('button','btn small',room.g?'Chơi lại':'Bắt đầu');start.disabled=!allReady;start.title=allReady?'Tất cả đã sẵn sàng':'Chờ tất cả người chơi sẵn sàng';start.onclick=()=>send({t:'start'});actions.append(start)}
+ if(room.host!==me.id&&!room.on){const mine=room.players.find(p=>p.id===me.id);const ready=el('button',mine&&mine.ready?'btn ghost small':'btn small',mine&&mine.ready?'Hủy sẵn sàng':'Sẵn sàng');ready.onclick=()=>send({t:'ready',ready:!(mine&&mine.ready)});actions.append(ready)}
+ top.append(title,actions);m.append(top);
+ const roomInfo=el('div','pill');roomInfo.style.display='inline-flex';roomInfo.style.margin='0 0 12px';roomInfo.textContent=(room.pub===false?'🔒 Phòng riêng':'🌐 Phòng công khai')+' · '+room.players.length+'/'+(room.game==='caro'?2:6)+' người · Mã '+room.code;m.append(roomInfo);
+ const players=el('div','player-strip');room.players.forEach((p,i)=>{const item=el('div','player'+(p.id===me.id?' me':''));item.append(el('span','avatar',p.name.slice(0,1).toUpperCase()),document.createTextNode(p.name+(p.id===room.host?' · Chủ phòng':'')+(p.ready?' · ✓ Sẵn sàng':' · Đang chờ')));players.append(item)});m.append(players);
+ const area=el('section','play-area');
+ if(!room.g){const note=el('div','start-note');note.append(el('h2',0,'Đang chờ người chơi'),el('p','sub',room.players.length<2?'Gửi mã phòng cho bạn bè để cùng tham gia.':'Chủ phòng có thể bắt đầu trận đấu.'));area.append(note);m.append(area);return}
+ const g=room.g,status=el('div','game-status'),winner=room.players.find(p=>p.id===g.win);
+ let msg=g.win?(g.win===-1?'Trận đấu hòa!':'🏆 '+(winner?winner.name:'Người chơi')+' chiến thắng!'):'Đến lượt: '+room.players[g.turn].name;
+ status.append(el('strong',0,msg));if(room.game==='noitu'&&room.on){const tm=el('span','pill','20 giây');tm.id='tm';status.append(tm)}area.append(status);
+ if(room.game==='caro'){
+  const board=el('div','board');g.b.forEach((v,i)=>{const b=el('button',v===1?'x':v===2?'o':'',v===1?'X':v===2?'O':'');b.disabled=!room.on||room.players[g.turn]?.id!==me.id||!!v;b.onclick=()=>send({t:'move',i});board.append(b)});area.append(board);
+ }else{
+  const words=el('div','word-list');g.words.forEach(x=>{const p=room.players.find(q=>q.id===x.by);words.append(el('div','word-item',(p?p.name:'Người chơi')+': '+x.w))});if(!g.words.length)words.append(el('div','empty','Hãy bắt đầu bằng một từ có hai tiếng.'));
+  area.append(words);
+  if(room.on){const form=el('div','word-form'),input=el('input','field');input.placeholder='Nhập từ có hai tiếng';const b=el('button','btn','Gửi từ');const submit=()=>{send({t:'move',w:input.value});input.value='';input.focus()};b.onclick=submit;input.onkeydown=e=>e.key==='Enter'&&submit();form.append(input,b);area.append(form)}
+ }
+ m.append(area);
+}
+setInterval(()=>{const t=$('#tm');if(t)t.textContent=Math.max(0,Math.ceil((tEnd-Date.now())/1000))+' giây'},250);
+const sendChat=()=>{const i=$('#ci');if(!enteredLobby){showToast('Bạn cần nhập tên nhân vật và vào sảnh trước khi bình luận.');return;}if(!i.value.trim())return;if(!send({t:'chat',text:i.value})){showToast('Chưa kết nối được với máy chủ. Hãy đợi kết nối hoặc tải lại trang.');return;}i.value='';};
+$('#cs').onclick=sendChat;$('#ci').onkeydown=e=>e.key==='Enter'&&sendChat();
+$('#chat-toggle').onclick=()=>{const box=document.querySelector('.chatbox');box.classList.toggle('mobile-open');$('#chat-toggle').textContent=box.classList.contains('mobile-open')?'Thu gọn':'Mở chat'};
+setChatEnabled(false);login();
+</script>
+</body>
+</html>
