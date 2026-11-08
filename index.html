@@ -156,7 +156,10 @@ function login(){
 }
 function createRoom(game){if(!send({t:'create',game,pub:true}))alert('Chưa kết nối được với máy chủ. Vui lòng thử lại sau.');}
 function drawLobby(){
- const m=$('#main');m.innerHTML='';
+ const m=$('#main');
+ const active=document.activeElement;
+ const keepFocus=active&&m.contains(active)?{placeholder:active.placeholder,value:active.value,start:active.selectionStart,end:active.selectionEnd}:null;
+ m.innerHTML='';
  const welcome=el('div','welcome');
  const intro=el('div');intro.append(el('h1',0,'Chơi cùng bạn bè'),el('p','sub','Chọn trò chơi hoặc tham gia phòng bằng mã.'));
  const search=el('input','search');search.placeholder='Tìm game hoặc phòng...';search.value=window.gvSearch||'';
@@ -182,6 +185,7 @@ function drawLobby(){
   const b=el('button','btn small',x.on||x.n>=x.max?'Đầy':'Vào');b.disabled=x.on||x.n>=x.max;b.onclick=()=>send({t:'join',code:x.code});card.append(meta,b);list.append(card);
  });m.append(list);
  search.oninput=()=>{window.gvSearch=search.value;const q=search.value.trim().toLowerCase();m.querySelectorAll('[data-search]').forEach(x=>x.classList.toggle('hidden',!x.dataset.search.includes(q)));};
+ if(keepFocus){const target=[...m.querySelectorAll('input')].find(x=>x.placeholder===keepFocus.placeholder);if(target){target.value=keepFocus.value;target.focus();try{target.setSelectionRange(keepFocus.start,keepFocus.end)}catch{}}}
  setChatTitle();
 }function drawRoom(){
  const m=$('#main');m.innerHTML='';
