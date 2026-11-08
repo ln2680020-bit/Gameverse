@@ -8,6 +8,7 @@ const srv = http.createServer((q, r) => {
 const wss = new WebSocketServer({ server: srv });
 const GAMES = { caro: { max: 2 }, noitu: { max: 6 } }, rooms = {};
 let uid = 0;
+const chatHistory = [];
 const send = (c, o) => c.readyState === 1 && c.send(JSON.stringify(o));
 const mkcode = () => Math.random().toString(36).slice(2, 8).toUpperCase();
 
@@ -63,10 +64,12 @@ wss.on('connection', c => {
     const r = c.room;
     if (m.t === 'hello') {
       c.name = String(m.name || '').trim().slice(0, 16) || c.name;
-      send(c, { t: 'me', id: c.id, name: c.name }); if (c.room) sync(c.room); else lobby();
+      send(c, { t: 'me', id: c.id, name: c.name });
+      if (!c.room) { chatHistory.forEach(item => send(c, item)); lobby(); } else sync(c.room);
     } else if (m.t === 'chat') {
       const text = String(m.text || '').trim().slice(0, 200); if (!text) return;
-      const o = { t: 'chat', name: c.name, text };
+      const o = { t: 'chat', name: c.name, text, at: Date.now() };
+      if (!r) { chatHistory.push(o); if (chatHistory.length > 50) chatHistory.shift(); }
       (r ? r.players : [...wss.clients]).forEach(p => send(p, o));
     } else if (m.t === 'create') {
       if (!GAMES[m.game]) return; leave(c);
