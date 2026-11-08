@@ -113,6 +113,18 @@ h1{font-size:clamp(24px,3vw,32px);line-height:1.1;margin:0 0 7px;letter-spacing:
 @media(max-width:1100px){.layout{grid-template-columns:145px minmax(0,1fr)}.side{grid-column:2}.nav-side{grid-row:1 / span 2;min-height:500px}.catalog-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:760px){.layout{grid-template-columns:1fr}.nav-side{position:static;min-height:0;flex-direction:row;overflow:auto;padding:6px;gap:5px}.nav-label,.nav-spacer,.nav-foot{display:none}.nav-link{width:auto;white-space:nowrap;justify-content:center;padding:9px 11px;font-size:12px}.side{grid-column:1}.catalog-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:430px){.catalog-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.catalog-card{padding:9px 4px}.catalog-card .game-icon{width:48px;height:48px;font-size:25px}.catalog-card strong{font-size:11px}.catalog-card small{font-size:10px}}
+
+/* Private room dialog */
+.modal-backdrop{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:#050b14cc;backdrop-filter:blur(4px)}
+.room-dialog{width:min(100%,440px);background:var(--panel);border:1px solid #496078;border-radius:12px;padding:20px;box-shadow:8px 8px 0 #080f19}
+.room-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+.room-dialog h2{margin:0;font-size:21px}.room-dialog p{margin:5px 0 16px;color:var(--muted);font-size:13px}
+.dialog-close{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:7px;width:34px;height:34px;font-size:20px}
+.dialog-choice{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:12px;margin:8px 0;background:#122033;border:1px solid var(--line);border-radius:9px;color:var(--text)}
+.dialog-choice.selected{border-color:var(--accent);background:#1b3947;box-shadow:0 0 0 1px #42d6c533}
+.dialog-choice .game-icon{width:44px;height:44px;font-size:24px}.dialog-choice span:last-child{display:grid;gap:2px}.dialog-choice small{color:var(--muted)}
+.dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:16px}
+@media(max-width:480px){.room-dialog{padding:16px}.room-dialog h2{font-size:19px}.dialog-actions .btn{flex:1}}
 </style>
 </head>
 <body>
@@ -198,7 +210,25 @@ function changePlayerName(){
 }
 $('#profile').addEventListener('click',changePlayerName);
 function createRoom(game,pub=true){if(!send({t:'create',game,pub}))alert('Chưa kết nối được với máy chủ. Vui lòng thử lại sau.');}
-function createPrivateRoom(){const choice=prompt('Chọn game để tạo phòng riêng:\n1 - Cờ Caro\n2 - Nối Từ','1');if(choice===null)return;if(choice.trim()==='1')createRoom('caro',false);else if(choice.trim()==='2')createRoom('noitu',false);else alert('Vui lòng chọn 1 hoặc 2.');}
+function createPrivateRoom(){
+ const backdrop=el('div','modal-backdrop');backdrop.setAttribute('role','presentation');
+ const dialog=el('section','room-dialog');dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','private-dialog-title');
+ const head=el('div','room-dialog-head'),heading=el('div');const title=el('h2',0,'Tạo phòng riêng');title.id='private-dialog-title';heading.append(title,el('p',0,'Chọn trò chơi để tạo phòng và mời bạn bè bằng mã phòng.'));
+ const close=el('button','dialog-close','×');close.type='button';close.setAttribute('aria-label','Đóng');close.onclick=()=>backdrop.remove();head.append(heading,close);dialog.append(head);
+ let selected='caro';const choices=[];
+ [['caro','⭕','Cờ Caro','Đối đầu 1 vs 1'],['noitu','🔤','Nối Từ','Tối đa 6 người']].forEach(([id,ico,name,desc])=>{
+  const b=el('button','dialog-choice'+(id===selected?' selected':''));b.type='button';b.setAttribute('aria-pressed',String(id===selected));
+  b.append(el('div','game-icon',ico));const info=el('span');info.append(el('strong',0,name),el('small',0,desc));b.append(info);
+  b.onclick=()=>{selected=id;choices.forEach(x=>{x.classList.toggle('selected',x.dataset.game===selected);x.setAttribute('aria-pressed',String(x.dataset.game===selected));});};
+  b.dataset.game=id;choices.push(b);dialog.append(b);
+ });
+ const actions=el('div','dialog-actions'),cancel=el('button','btn ghost','Hủy'),create=el('button','btn','Tạo phòng');
+ cancel.type=create.type='button';cancel.onclick=()=>backdrop.remove();create.onclick=()=>{backdrop.remove();createRoom(selected,false);};
+ actions.append(cancel,create);dialog.append(actions);backdrop.append(dialog);
+ backdrop.addEventListener('click',e=>{if(e.target===backdrop)backdrop.remove();});
+ const esc=e=>{if(e.key==='Escape'&&backdrop.isConnected){backdrop.remove();document.removeEventListener('keydown',esc);}};
+ document.addEventListener('keydown',esc);document.body.append(backdrop);close.focus();
+}
 function drawLobby(){
  const m=$('#main');
  const active=document.activeElement;
