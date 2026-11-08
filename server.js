@@ -132,8 +132,10 @@ wss.on('connection', c => {
       const room = { code: mkcode(), game: m.game, pub: !!m.pub, players: [c], on: false, g: null }; c.ready = true;
       c.color = CCN_COLORS[0]; rooms[room.code] = room; c.room = room; sync(room);
     } else if (m.t === 'join') {
-      const room = rooms[String(m.code || '').toUpperCase()];
-      if (!room) return send(c, { t: 'err', msg: 'Không tìm thấy phòng' });
+      const code = String(m.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (code.length !== 6) return send(c, { t: 'err', msg: 'Mã phòng phải gồm 6 ký tự chữ hoặc số.' });
+      const room = rooms[code];
+      if (!room) return send(c, { t: 'err', msg: 'Không tìm thấy phòng. Hãy kiểm tra lại mã mời hoặc yêu cầu chủ phòng gửi mã mới.' });
       if (room.on || room.players.length >= GAMES[room.game].max) return send(c, { t: 'err', msg: 'Phòng đầy hoặc đang chơi' });
       if (room === r) return; leave(c);
       room.players.push(c); c.room = room; c.ready = false; c.color = CCN_COLORS.find(color => !room.players.some(p => p !== c && p.color === color)) || CCN_COLORS[0]; sync(room);
