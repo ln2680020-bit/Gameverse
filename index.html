@@ -422,8 +422,10 @@ function drawRoom(){
   }else{
    const result=el('div','word-list');result.style.maxWidth='460px';result.style.margin='30px auto';
    g.result.choices.forEach(x=>{const p=room.players.find(q=>q.id===x.id);const choice=choices.find(q=>q[0]===x.choice);result.append(el('div','word-item',(p?p.name:'Người chơi')+' chọn '+choice[1]+' '+choice[2]));});
-   const outcome=el('h2','',g.win===-1?'Hai bạn hòa nhau!':(winner?winner.name:'Người chơi')+' thắng ván này!');outcome.style.textAlign='center';outcome.style.margin='20px 0';area.append(result,outcome);
-   const again=el('p','sub','Chủ phòng có thể nhấn Chơi lại để bắt đầu ván mới.');again.style.textAlign='center';area.append(again);
+   const outcome=el('h2','',g.result.winner===-1?'Ván này hòa nhau!':(room.players.find(p=>p.id===g.result.winner)?.name||'Người chơi')+' thắng ván này!');outcome.style.textAlign='center';outcome.style.margin='20px 0 8px';area.append(result,outcome);
+   const score=el('p','sub','Tỷ số · '+room.players.map(p=>p.name+': '+((g.score&&g.score[p.id])||0)).join('  —  ')+' · Cần 3 điểm để thắng');score.style.textAlign='center';area.append(score);
+   if(room.on){const next=el('button','btn','Bắt đầu ván '+(g.round+1));next.style.display='block';next.style.margin='14px auto';next.onclick=()=>send({t:'nextRound'});area.append(next);}
+   else{const done=el('p','sub','Trận đấu đã kết thúc. Chủ phòng có thể nhấn Chơi lại để đấu trận mới.');done.style.textAlign='center';area.append(done);}
   }
  }else if(room.game==='chess'){
   const board=el('div','chess-board'),fen=(g.fen||'').split(' ')[0].split('/');
